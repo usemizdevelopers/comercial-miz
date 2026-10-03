@@ -72,6 +72,7 @@
   --size-btn-sm: 36px;
   --size-field: 52px;
   --size-field-money: 64px;
+  --size-field-hex: 112px; /* campo do código hex da cor no catálogo */
   --size-chip: 44px;
   --size-chip-filter: 36px;
   --size-choice: 64px;

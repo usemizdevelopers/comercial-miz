@@ -9,6 +9,11 @@ import { PerfilProvisorio } from '@/features/auth/PerfilProvisorio'
 
 const Entrar = lazy(() => import('@/features/auth/Entrar'))
 const TrocarSenha = lazy(() => import('@/features/auth/TrocarSenha'))
+const Lojas = lazy(() => import('@/features/admin-miz/Lojas'))
+const LojaDetalhe = lazy(() => import('@/features/admin-miz/LojaDetalhe'))
+const Catalogo = lazy(() => import('@/features/admin-miz/Catalogo'))
+const PecaEditar = lazy(() => import('@/features/admin-miz/PecaEditar'))
+const Admins = lazy(() => import('@/features/admin-miz/Admins'))
 // Vitrine dos componentes: só existe em desenvolvimento (fica fora do build de produção)
 const VitrineComponentes = import.meta.env.DEV ? lazy(() => import('@/features/dev/VitrineComponentes')) : null
 
@@ -78,11 +83,11 @@ export function Rotas() {
         }
       >
         <Route path="/miz" element={<Navigate to="/miz/lojas" replace />} />
-        <Route path="/miz/lojas" element={<PaginaEmConstrucao titulo="Lojas" etapa={2} descricao="Parte C desta etapa." />} />
-        <Route path="/miz/lojas/:id" element={<PaginaEmConstrucao titulo="Loja" etapa={2} descricao="Parte C desta etapa." />} />
-        <Route path="/miz/catalogo" element={<PaginaEmConstrucao titulo="Catálogo" etapa={2} descricao="Parte C desta etapa." />} />
-        <Route path="/miz/catalogo/:id" element={<PaginaEmConstrucao titulo="Peça" etapa={2} descricao="Parte C desta etapa." />} />
-        <Route path="/miz/admins" element={<PaginaEmConstrucao titulo="Admins Miz" etapa={2} descricao="Parte C desta etapa." />} />
+        <Route path="/miz/lojas" element={<Lojas />} />
+        <Route path="/miz/lojas/:id" element={<LojaDetalhe />} />
+        <Route path="/miz/catalogo" element={<Catalogo />} />
+        <Route path="/miz/catalogo/:id" element={<PecaEditar />} />
+        <Route path="/miz/admins" element={<Admins />} />
       </Route>
 
       {VitrineComponentes && <Route path="/dev/componentes" element={<VitrineComponentes />} />}

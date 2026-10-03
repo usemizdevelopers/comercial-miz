@@ -28,6 +28,7 @@ const espacos = {
   'btn-sm': v('size-btn-sm'),
   campo: v('size-field'),
   'campo-valor': v('size-field-money'),
+  'campo-hex': v('size-field-hex'),
   chip: v('size-chip'),
   'chip-filtro': v('size-chip-filter'),
   escolha: v('size-choice'),
