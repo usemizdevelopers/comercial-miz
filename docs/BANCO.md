@@ -251,3 +251,9 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | 20261003232108 | mizloja_venda_minimo_um_item |
 | 20261003232159 | mizloja_permissoes_colunas |
 | pendente | mizloja_sem_imagens (`supabase/migrations-pendentes/`) |
+
+## Edge Functions (escrita com service role)
+
+Criar conta no Auth, gerar senha, bloquear login e criar loja + dona acontecem só nas Edge Functions de `supabase/functions` (lista, quem chama e corpo das chamadas no `CLAUDE.md`, seção "Edge Functions"). Elas gravam nas colunas que a tabela acima marca como "Edge Function". Funções temporárias: `mizloja-primeiro-admin` (uso único, versão desligada no repositório) e `mizloja-seed-demo` (Loja Demonstração, `docs/DEMO.md`).
+
+Pendente: a migration `mizloja_sem_imagens` (apaga `mizloja_peca_imagens`) está em `supabase/migrations-pendentes/` e ainda não foi aplicada (`docs/TESTES-PENDENTES.md`, item 0). Até lá a tabela continua no banco, sem uso pelo site.

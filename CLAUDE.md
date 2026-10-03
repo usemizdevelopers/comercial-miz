@@ -15,7 +15,8 @@ Documentos de referência:
 - `docs/BANCO.md` — banco de dados completo (tabelas, funções, RLS, diagrama).
 
 ## Etapas
-1. Banco de dados ✅ · 2. Fundação do app (projeto web, design system, login, troca de senha, layouts, criação de usuárias, dados de demonstração) · 3. Admin Miz: contas · 4–9. Painel ADM: Equipe, Metas e prêmios, Configurações, Clientes, Vendas, Visão geral · 10–14. Painel da vendedora: Lançar venda, Ficha da cliente, Hoje, Clientes (kanban), Metas e Perfil · 15. Revisão final.
+1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · 3. ADM: Equipe e Configurações · 4. Clientes (kanban e ficha) e Lançar venda · 5. Hoje e Metas (vendedora e ADM) · 6. ADM: Visão geral e Vendas · depois: revisão final.
+Pendências e decisões em aberto: `docs/PENDENCIAS.md`.
 
 ## Independência do app MIZ (REGRA ABSOLUTA)
 O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é **compartilhado** com outro produto, o app MIZ. As 28 tabelas sem prefixo do schema `public` (profiles, pecas, peca_cores, pedidos, cursos etc.) são **de outro projeto**.
@@ -82,7 +83,7 @@ src/layouts/          layouts dos 3 painéis
 src/components/ui/    design system (importar de '@/components/ui')
 src/components/shared/ peças compostas reutilizáveis
 src/features/<assunto>/ admin-miz, auth, equipe, vendas, clientes, metas, hoje, config, dashboard, dev
-src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn
+src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn, acesso, funcoes, cores
 src/hooks/            hooks genéricos
 src/styles/           tokens.css (todos os tokens) e globals.css
 ```
@@ -112,9 +113,57 @@ Vitrine viva em `/dev/componentes` (só em `npm run dev`).
 | `BottomSheet` (`computador`: central ou lateral), `ConfirmSheet` | |
 | `ToastProvider` + `useToast().mostrar(texto, acao?)` | |
 | `Tabs`, `SegmentedControl`, `TopBar`, `BottomNav`, `Sidebar`, `Logo` | |
+| `SelectField` | lista de opções nativa com o visual dos campos |
 
 ### Utilitários (`src/lib`, com testes)
 `normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11).
+
+### Rotas (`src/app/rotas.tsx`)
+Páginas carregadas sob demanda (`lazy`). As que ainda não existem usam `PaginaEmConstrucao` ("Em construção · Etapa X"): cada etapa troca o elemento pela página real.
+| Rota | Quem | Página / etapa |
+| --- | --- | --- |
+| `/entrar`, `/trocar-senha` | deslogada / troca obrigatória | `features/auth` |
+| `/hoje` · `/metas` | vendedora (e ADM em modo vendedora) | etapa 5 |
+| `/clientes`, `/clientes/:id`, `/venda/nova` | vendedora | etapa 4 |
+| `/perfil` | vendedora | provisória com "Sair" |
+| `/adm` · `/adm/vendas` | ADM | etapa 6 |
+| `/adm/clientes` | ADM | etapa 4 |
+| `/adm/equipe` · `/adm/config` | ADM | etapa 3 |
+| `/adm/metas` | ADM | etapa 5 |
+| `/miz/lojas`, `/miz/lojas/:id`, `/miz/catalogo`, `/miz/catalogo/:id` (`nova` = peça nova), `/miz/admins` | Admin Miz | prontas (`features/admin-miz`) |
+| `/dev/componentes` | só em `npm run dev` | vitrine |
+
+Guardas (`src/app/guardas.tsx`): `Protegida papeis={[...]}`, `SoDeslogada`, `SoTrocaDeSenha`, `RedirecionarInicio` (manda cada papel para `paginaInicial`: Admin Miz → `/miz/lojas`, ADM → `/adm`, vendedora → `/hoje`). Com `precisa_trocar_senha`, toda rota leva a `/trocar-senha`.
+
+### Sessão (`src/app/sessao`)
+`useSessao()` → `estado`, `usuaria` (`id`, `papel`, `nome`, `lojaId`, `precisaTrocarSenha`…), `ehAdminMiz`, `modoVendedora`, `entrar(usuario, senha)`, `sair()`, `recarregar()`, `alternarModoVendedora(ativo)`.
+- `entrar` monta o e-mail técnico (`emailTecnico`), faz `signInWithPassword` e chama `mizloja_registrar_acesso`.
+- O papel vem de `mizloja_admins` ou `mizloja_usuarias` (+ situação da loja). Usuária ou loja inativa: sai na hora e a tela de entrada mostra o aviso (`avisos.ts`).
+- O acesso é conferido de novo a cada 60 s e ao voltar para a aba.
+- Dados de tela: TanStack Query, chaves por assunto (ex.: `['miz', 'lojas']`); depois de gravar, `invalidateQueries`.
+
+### Edge Functions (`supabase/functions`)
+Tudo que cria conta no Auth, gera senha ou bloqueia login passa por Edge Function (service role só lá, via `Deno.env`). No site, chamar **sempre** com `chamarFuncao(nome, corpo)` (`src/lib/funcoes.ts`, tipado em `RespostasFuncoes`); erro vem como `ErroFuncao` com mensagem em português (usar `mensagemDeErro`).
+| Função | Quem chama | Corpo → resposta |
+| --- | --- | --- |
+| `mizloja-criar-loja` | Admin Miz | `{loja:{nome,cnpj,cidade,uf,whatsapp?}, dona:{nome,whatsapp}}` → `AcessoCriado` + `loja_id` |
+| `mizloja-criar-usuaria` | ADM (vendedora da própria loja) ou Admin Miz (só a dona, `perfil:'adm'`) | `{nome, whatsapp, loja_id?, perfil?}` → `AcessoCriado` |
+| `mizloja-nova-senha` | ADM (vendedoras dela) ou Admin Miz | `{usuario_id}` → `AcessoCriado` (volta a exigir troca) |
+| `mizloja-alterar-situacao` | ADM (vendedoras) ou Admin Miz (lojas, usuárias, admins) | `{tipo:'usuaria'\|'loja'\|'admin', id, situacao:'ativa'\|'inativa'}` (desativar bloqueia o login no Auth) |
+| `mizloja-criar-admin` | Admin Miz | `{nome, whatsapp}` → `AcessoCriado` |
+| `mizloja-primeiro-admin` | ninguém (temporária, versão **desligada** no repositório) | ver `docs/TESTES-PENDENTES.md` item 1 |
+| `mizloja-seed-demo` | Admin Miz (temporária, não publicada) | `{acao:'carregar'\|'remover'}` — ver `docs/DEMO.md` |
+
+- Código comum em `_shared/` (CORS por `ALLOWED_ORIGINS`, `quemChama`, `exigirAdminMiz`, `gerarSenha`, `criarContaAuth`, `bloquearLogin`).
+- Publicar com `verify_jwt = true` (exceto a `primeiro-admin`, no uso único). Secrets: `APP_URL` (link da mensagem de acesso) e `ALLOWED_ORIGINS`.
+- `AcessoCriado` mostra usuário e senha **uma vez** (componente `AcessoCriado`, com "Enviar pelo WhatsApp" e "Copiar").
+
+### Componentes compartilhados (`src/components/shared`)
+`TelaCarregando`, `PaginaEmConstrucao`, `AcessoCriado`, `CabecalhoPagina` (título, subtítulo, ação), `ListaCarregando` (em `EstadoCarregando`).
+
+### Loja Demonstração e deploy
+- Demonstração: `docs/DEMO.md` (função `mizloja-seed-demo` + `supabase/seed-demo/dados.sql` e `verificar.sql`; CNPJ de teste 99.999.999/0001-91).
+- Deploy: `Dockerfile` (Node 22 → nginx), `nginx.conf`, guia em `docs/DEPLOY-EASYPANEL.md`. As `VITE_*` são build args.
 
 ## Como trabalhar
 - **Sempre planejar antes de codar:** apresentar o plano (arquivos, migrations, riscos) e esperar aprovação quando a mudança for estrutural.
