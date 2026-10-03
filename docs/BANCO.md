@@ -10,7 +10,7 @@ Projeto Supabase `usemizdigitalAPP` (`ldlwdxgjiohuvionihhv`, sa-east-1), compart
 | --- | --- |
 | Lojas e usuárias | Tabelas próprias (`mizloja_lojas`, `mizloja_usuarias`). Não há ligação com `public.profiles`. |
 | Admin Miz | Tabela própria `mizloja_admins` (não usa `profiles.role`). Carga inicial: conta `usemizdigital@gmail.com`. |
-| Catálogo | Tabelas próprias (`mizloja_pecas`, `mizloja_peca_cores`, `mizloja_peca_tamanhos`, `mizloja_peca_imagens`), carregadas uma vez por cópia de `public.pecas` e afins. `origem_id` = id no app MIZ, só como referência. |
+| Catálogo | Tabelas próprias (`mizloja_pecas`, `mizloja_peca_cores`, `mizloja_peca_tamanhos`), carregadas uma vez por cópia de `public.pecas` e afins. `origem_id` = id no app MIZ, só como referência. **Sem fotos** (decisão da etapa 2): `mizloja_peca_imagens` sai pela migration pendente `supabase/migrations-pendentes/mizloja_sem_imagens.sql`. |
 | Login | O Auth é único no projeto. O gatilho do app MIZ cria um profile para todo usuário novo; o gatilho `mizloja_auth_limpar_profile` (constraint trigger adiado, em `auth.users`) apaga esse profile no fim da mesma transação quando `raw_user_meta_data->>'app' = 'mizloja'`. Nada do app MIZ foi alterado. |
 | Funções de apoio do RLS | Schema próprio `mizloja_interno`, fora da API REST. |
 
@@ -32,7 +32,6 @@ erDiagram
   mizloja_peca_cores ||--o{ mizloja_venda_itens : "cor"
   mizloja_pecas ||--|{ mizloja_peca_cores : tem
   mizloja_pecas ||--|{ mizloja_peca_tamanhos : tem
-  mizloja_pecas ||--o{ mizloja_peca_imagens : tem
   mizloja_lojas ||--o{ mizloja_metas : tem
   mizloja_metas ||--o{ mizloja_metas_vendedoras : divide
   mizloja_usuarias ||--o{ mizloja_metas_vendedoras : recebe
@@ -96,15 +95,15 @@ Gatilho: ninguém pela API muda `perfil`, `loja_id`, `usuario`, `precisa_trocar_
 ### mizloja_mensagens — textos de WhatsApp
 PK (`loja_id`, `tipo` aniversario/pos_venda); `texto` até 300 caracteres, variáveis `[NOME]` e `[LOJA]`; `atualizado_por`, `updated_at`.
 
-### Catálogo
+### Catálogo (sem fotos)
 | Tabela | Colunas |
 | --- | --- |
-| mizloja_pecas | id, nome, codigo_referencia (único), categoria, ativa, esgotado, origem_id, created_at, updated_at |
-| mizloja_peca_cores | id, peca_id, nome (padronizado: "Off White", "Preto"), valor (hex `#rrggbb`), ordem, origem_id |
+| mizloja_pecas | id, nome, codigo_referencia (único, maiúsculas), categoria, composicao ("base/composição"), ativa, esgotado, origem_id, created_at, updated_at |
+| mizloja_peca_cores | id, peca_id, nome (padronizado: "Off White", "Preto"; único por peça, sem diferenciar maiúscula), valor (hex `#rrggbb` minúsculo), ordem, **ativa**, origem_id |
 | mizloja_peca_tamanhos | id, peca_id, valor (PP, P, M, G, GG, PP/P, M/G, Unico), ordem; único (peca_id, valor) |
-| mizloja_peca_imagens | id, peca_id, url, ordem |
 
-Carga inicial: 18 peças, 70 cores, 50 tamanhos, 71 imagens. As URLs das imagens ainda apontam para o storage do app MIZ.
+Carga inicial: 18 peças, 70 cores, 50 tamanhos. Gatilho `mizloja_tg_catalogo_padronizar` mantém o padrão nas próximas gravações (apara nomes, código em maiúsculas, hex minúsculo, "único/U" → `Unico`).
+Peça ou cor **já usada em venda não se apaga** (chave estrangeira com `on delete restrict`): só se desativa. Peça ou cor desativada não entra em item novo, mas continua no histórico. A tabela `mizloja_peca_imagens` (cópia das fotos) ainda existe até a migration pendente ser aplicada; o site não a usa.
 
 ### mizloja_clientes
 | Coluna | Significado |
@@ -141,7 +140,7 @@ Regras do gatilho: apara e normaliza; no cadastro pela tela, `cadastrada_por` = 
 
 ### mizloja_venda_itens
 `id`, `venda_id`, `loja_id` (copiado), `tipo` (miz/outra), `peca_id`, `peca_cor_id`, `peca_nome`, `peca_codigo`, `cor`, `cor_hex`, `tamanho`, `quantidade`, `created_at`.
-Peça Miz: exige peça e cor da própria peça, tamanho dentro da grade; copia nome, código, cor e hex. Outra marca: cor digitada, sem peça. Tamanho aceita "unico/Único/U" → `Unico`.
+Peça Miz: exige peça e cor (ativas) da própria peça e o tamanho da **grade cadastrada da peça** (ex.: PP/P, M/G); copia nome, código, cor e hex. Outra marca: cor digitada, sem peça, tamanho só PP, P, M, G, GG ou Unico. Tamanho aceita "unico/Único/U" → `Unico`.
 
 ### mizloja_metas e mizloja_metas_vendedoras
 Metas: `loja_id`, `mes` (dia 1; único por loja), `valor_loja`, `status` rascunho/publicada, `publicada_em` (gatilho), `premio_descricao`, `premio_condicao_pct` (100), `premio_extra_descricao`, `premio_extra_pct`, `criado_por`.
@@ -168,7 +167,7 @@ Por vendedora: `meta_id`, `loja_id` (copiado), `usuaria_id`, `valor` (nulo = sem
 | `mizloja_interno.mizloja_meu_perfil` | — | text | adm / vendedora |
 | `mizloja_interno.mizloja_eh_adm` | loja uuid | boolean | |
 | `mizloja_recalcular_cliente` | cliente uuid | void | Interna. Tamanho = maior quantidade (empate: mais recente); cores = 3 maiores; intervalo = (última − primeira) ÷ (n − 1) |
-| `mizloja_lancar_venda` | p_cliente_id, p_valor_total, p_forma_pagamento, p_itens jsonb, p_data_venda = now(), p_vendedora_id = auth.uid() | uuid da venda | Invoker (respeita RLS). Itens: `[{tipo, peca_id, peca_cor_id, cor, cor_hex, tamanho, quantidade}]` |
+| `mizloja_lancar_venda` | p_cliente_id, p_valor_total, p_forma_pagamento, p_itens jsonb, p_data_venda = now(), p_vendedora_id = auth.uid() | uuid da venda | Invoker (respeita RLS). **Mínimo 1 item.** Itens: `[{tipo, peca_id, peca_cor_id, cor, cor_hex, tamanho, quantidade}]` |
 | `mizloja_buscar_clientes` | p_termo, p_limite = 20 (máx. 50) | id, nome, whatsapp_final (4 últimos), ultima_compra_em, num_compras, vendedora_id, vendedora_nome | Base inteira da loja. A partir de 2 caracteres. Só números → busca no WhatsApp; texto → nome sem acento (contém ou semelhança ≥ 0,5) |
 | `mizloja_transferir_cliente` | p_cliente_id, p_para_usuaria_id, p_recado = null | void | Vendedora só transfere clientes dela (ou sem responsável); motivo manual/adm |
 | `mizloja_transferir_carteira` | p_de, p_para | integer (qtd) | Só ADM; motivo desativacao |
@@ -204,6 +203,28 @@ A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feit
 - **Mensagens e config:** a loja lê; só ADM altera.
 - **Alterações:** só ADM lê; escrita só por gatilho.
 
+## Permissões de escrita por coluna
+O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária logada (`authenticated`) pode gravar. Nenhuma tabela permite editar `id`, autoria, datas ou campos calculados pela API; isso só acontece por gatilhos, funções internas e Edge Functions (service role).
+
+| Tabela | INSERT | UPDATE | DELETE |
+| --- | --- | --- | --- |
+| mizloja_admins | — (Edge Function) | nome | — |
+| mizloja_lojas | — (Edge Function) | nome, cidade, uf, whatsapp | — |
+| mizloja_usuarias | — (Edge Function) | nome, whatsapp, email | — |
+| mizloja_pecas | nome, codigo_referencia, categoria, composicao, ativa, esgotado | os mesmos | sim (bloqueado se já vendida) |
+| mizloja_peca_cores | peca_id, nome, valor, ordem, ativa | nome, valor, ordem, ativa | sim (bloqueado se já vendida) |
+| mizloja_peca_tamanhos | peca_id, valor, ordem | ordem | sim |
+| mizloja_clientes | loja_id, nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, vendedora_id, etapa_manual | nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, etapa_manual, recado_transferencia | sim (só ADM, pelo RLS) |
+| mizloja_vendas | cliente_id, vendedora_id, data_venda, valor_total, forma_pagamento | os mesmos + excluida, motivo_exclusao | — (exclusão lógica) |
+| mizloja_venda_itens | venda_id, tipo, peca_id, peca_cor_id, cor, cor_hex, tamanho, quantidade | os mesmos, menos venda_id | sim |
+| mizloja_metas | loja_id, mes, valor_loja, status, premio_* | mes, valor_loja, status, premio_* | sim |
+| mizloja_metas_vendedoras | meta_id, usuaria_id, valor, premio_elegivel | valor, premio_elegivel | sim |
+| mizloja_contatos | cliente_id, pasta | — | — |
+| mizloja_pulos | cliente_id | — | sim |
+| mizloja_mensagens | — | texto | — |
+| mizloja_config | — | dias_*, visibilidade_vendedora, ranking_visivel | — |
+| mizloja_transferencias, mizloja_alteracoes | — | — | — |
+
 ## Migrations aplicadas
 | Versão | Nome |
 | --- | --- |
@@ -226,3 +247,7 @@ A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feit
 | 20261003211600 | mizloja_admin_inicial |
 | 20261003212008 | mizloja_schema_interno |
 | 20261003225159 | mizloja_admins_acesso |
+| 20261003231852 | mizloja_catalogo_campos |
+| 20261003232108 | mizloja_venda_minimo_um_item |
+| 20261003232159 | mizloja_permissoes_colunas |
+| pendente | mizloja_sem_imagens (`supabase/migrations-pendentes/`) |

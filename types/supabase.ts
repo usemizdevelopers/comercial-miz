@@ -1044,6 +1044,7 @@ export type Database = {
       }
       mizloja_peca_cores: {
         Row: {
+          ativa: boolean
           created_at: string
           id: string
           nome: string
@@ -1053,6 +1054,7 @@ export type Database = {
           valor: string
         }
         Insert: {
+          ativa?: boolean
           created_at?: string
           id?: string
           nome: string
@@ -1062,6 +1064,7 @@ export type Database = {
           valor: string
         }
         Update: {
+          ativa?: boolean
           created_at?: string
           id?: string
           nome?: string
@@ -1146,6 +1149,7 @@ export type Database = {
           ativa: boolean
           categoria: string | null
           codigo_referencia: string
+          composicao: string | null
           created_at: string
           esgotado: boolean
           id: string
@@ -1157,6 +1161,7 @@ export type Database = {
           ativa?: boolean
           categoria?: string | null
           codigo_referencia: string
+          composicao?: string | null
           created_at?: string
           esgotado?: boolean
           id?: string
@@ -1168,6 +1173,7 @@ export type Database = {
           ativa?: boolean
           categoria?: string | null
           codigo_referencia?: string
+          composicao?: string | null
           created_at?: string
           esgotado?: boolean
           id?: string
