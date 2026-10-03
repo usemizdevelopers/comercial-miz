@@ -1,7 +1,8 @@
 import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { Eye, EyeSlash } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
-import { Campo, classesCaixa, type CampoBaseProps } from './Campo'
+import { Campo, type CampoBaseProps } from './Campo'
+import { classesCaixa } from './estilos'
 
 export interface TextFieldProps extends CampoBaseProps, Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
   /** Conteúdo fixo à esquerda (ex.: "R$") */

@@ -3,8 +3,10 @@ import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
 import { mascararWhatsapp } from '@/lib/whatsapp'
 import { formatarValor } from '@/lib/formatadores'
-import { Campo, classesCaixa, type CampoBaseProps } from './Campo'
+import { Campo, type CampoBaseProps } from './Campo'
+import { classesCaixa } from './estilos'
 import { TextField, type TextFieldProps } from './TextField'
+import type { DataPartes } from './dataPartes'
 
 /* ------------------------------------------------------------------ WhatsApp */
 
@@ -185,11 +187,6 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
 
 /* ------------------------------------------------------------------ Data de nascimento */
 
-export interface DataPartes {
-  dia: string
-  mes: string
-  ano: string
-}
 
 export interface DatePartsProps extends CampoBaseProps {
   value: DataPartes
@@ -223,18 +220,4 @@ export function DateParts({ value, onChange, rotulo = 'Data de nascimento', obri
       )}
     </Campo>
   )
-}
-
-/** Converte as partes em {aniv_dia, aniv_mes, aniv_ano}; devolve erro em texto se inválido. */
-export function lerDataPartes(p: DataPartes): { dia: number | null; mes: number | null; ano: number | null; erro?: string } {
-  const dia = p.dia ? Number(p.dia) : null
-  const mes = p.mes ? Number(p.mes) : null
-  const ano = p.ano ? Number(p.ano) : null
-  if (dia === null && mes === null && ano === null) return { dia, mes, ano }
-  if (dia === null || mes === null) return { dia, mes, ano, erro: 'Informe dia e mês' }
-  if (mes < 1 || mes > 12) return { dia, mes, ano, erro: 'Mês vai de 1 a 12' }
-  const maxDia = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mes - 1] ?? 31
-  if (dia < 1 || dia > maxDia) return { dia, mes, ano, erro: 'Confira o dia' }
-  if (ano !== null && (ano < 1900 || ano > new Date().getFullYear())) return { dia, mes, ano, erro: 'Confira o ano' }
-  return { dia, mes, ano }
 }

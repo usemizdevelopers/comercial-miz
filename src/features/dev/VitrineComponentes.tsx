@@ -183,7 +183,7 @@ export default function VitrineComponentes() {
 
         <Secao titulo="Botões">
           {(['grande', 'medio', 'pequeno'] as const).map((t) => (
-            <Linha key={t} rotulo={`Tamanho ${t}`}>
+            <Linha key={t} rotulo={`Tamanho ${{ grande: 'grande (56)', medio: 'médio (48)', pequeno: 'pequeno (36, toque 48)' }[t]}`}>
               {variantes.map((v) => (
                 <Button key={v} variante={v} tamanho={t}>
                   {v === 'whatsapp' ? undefined : rotulos[v]}

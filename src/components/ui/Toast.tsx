@@ -1,17 +1,13 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+
+import { ToastContexto, type AcaoAviso } from './toastContexto'
 
 interface Aviso {
   id: number
   texto: string
-  acao?: { rotulo: string; onClick: () => void }
+  acao?: AcaoAviso
 }
-
-interface ToastContexto {
-  mostrar: (texto: string, acao?: Aviso['acao']) => void
-}
-
-const Contexto = createContext<ToastContexto | null>(null)
 
 const DURACAO_MS = 3000
 
@@ -32,7 +28,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const valor = useMemo(() => ({ mostrar }), [mostrar])
 
   return (
-    <Contexto.Provider value={valor}>
+    <ToastContexto.Provider value={valor}>
       {children}
       {createPortal(
         <div
@@ -63,12 +59,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         </div>,
         document.body,
       )}
-    </Contexto.Provider>
+    </ToastContexto.Provider>
   )
-}
-
-export function useToast(): ToastContexto {
-  const ctx = useContext(Contexto)
-  if (!ctx) throw new Error('useToast precisa estar dentro de ToastProvider')
-  return ctx
 }

@@ -10,16 +10,6 @@ export interface CampoBaseProps {
   className?: string
 }
 
-/** Classes da caixa do campo (seção 7): 52 de altura, raio 10, borda 1 border, foco 1,5 primary. */
-export function classesCaixa({ erro, desabilitado }: { erro?: boolean; desabilitado?: boolean }) {
-  return cn(
-    'w-full rounded-md border bg-surface px-4 text-text-primary transition-[border-color,box-shadow] duration-fast ease-out',
-    'outline-none focus-within:border-1.5 focus-within:border-primary',
-    erro ? 'border-1.5 border-danger focus-within:border-danger' : 'border-border',
-    desabilitado && 'border-border-subtle bg-background-muted text-icon-muted',
-  )
-}
-
 /**
  * Moldura comum: rótulo acima (label, text-secondary, a 8 px), "*" quando obrigatório,
  * mensagem de erro em caption danger com ícone de 16, ou ajuda em caption.

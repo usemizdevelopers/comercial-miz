@@ -69,6 +69,8 @@ Detalhes, parâmetros e regras em `docs/BANCO.md`.
 ## Site (frontend)
 Stack: React 18 + Vite + TypeScript strict · Tailwind (tema = tokens) · React Router · TanStack Query · supabase-js v2 (tipado com `types/supabase.ts`) · react-hook-form + zod · @phosphor-icons/react (peso **light**) · date-fns ptBR · @fontsource/quicksand · Vitest.
 
+Versões fixas do lint (sem `^`): `eslint` 9.39.5, `@eslint/js` 9.39.5, `typescript-eslint` 8.71.0, `eslint-plugin-react-hooks` 5.2.0, `eslint-plugin-react-refresh` 0.4.26. Motivo: `@eslint/js` 10 exige ESLint 10, mas `eslint-plugin-react-hooks` 5 só aceita até ESLint 9; sem fixar, o `npm install` quebra com conflito de dependências. Para atualizar, suba o grupo inteiro junto e rode `npm run check`. O lint roda com `--max-warnings 0` e nenhuma regra foi desligada.
+
 Comandos: `npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run check` (os quatro juntos, rodar antes de todo commit).
 
 Variáveis (`.env`, nunca commitado; modelo em `.env.example`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_WHATSAPP_SUPORTE_MIZ`. **Nunca** usar a service role key no site.
