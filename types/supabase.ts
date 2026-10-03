@@ -549,20 +549,38 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          criado_por: string | null
           id: string
           nome: string
+          precisa_trocar_senha: boolean
+          ultimo_acesso_em: string | null
+          updated_at: string
+          usuario: string | null
+          whatsapp: string | null
         }
         Insert: {
           ativo?: boolean
           created_at?: string
+          criado_por?: string | null
           id: string
           nome: string
+          precisa_trocar_senha?: boolean
+          ultimo_acesso_em?: string | null
+          updated_at?: string
+          usuario?: string | null
+          whatsapp?: string | null
         }
         Update: {
           ativo?: boolean
           created_at?: string
+          criado_por?: string | null
           id?: string
           nome?: string
+          precisa_trocar_senha?: boolean
+          ultimo_acesso_em?: string | null
+          updated_at?: string
+          usuario?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }

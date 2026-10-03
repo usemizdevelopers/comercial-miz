@@ -48,9 +48,16 @@ erDiagram
 | Coluna | Tipo | Significado |
 | --- | --- | --- |
 | id | uuid PK → auth.users | Usuário do time Miz |
-| nome | text | Nome |
-| ativo | boolean | Desligar sem apagar |
-| created_at | timestamptz | |
+| nome | text | Nome (único campo editável pela API) |
+| whatsapp | text | 55 + DDD + número |
+| usuario | text único | Login (= WhatsApp no cadastro). Trocar de número = criar conta nova |
+| precisa_trocar_senha | boolean | true ao criar e ao gerar nova senha |
+| ultimo_acesso_em | timestamptz | |
+| ativo | boolean | Desligar sem apagar (só pela Edge Function) |
+| criado_por | uuid → auth.users | |
+| created_at, updated_at | timestamptz | |
+
+Permissão: `authenticated` só lê (RLS: a própria linha ou Admin Miz) e só atualiza a coluna `nome` (grant de coluna + política `mizloja_admins_update`, só Admin Miz). Gatilho `mizloja_admins_antes` normaliza o WhatsApp e impede, fora de funções internas, mudar usuário, senha, situação e autoria.
 
 ### mizloja_lojas
 | Coluna | Tipo | Significado |
@@ -165,8 +172,8 @@ Por vendedora: `meta_id`, `loja_id` (copiado), `usuaria_id`, `valor` (nulo = sem
 | `mizloja_buscar_clientes` | p_termo, p_limite = 20 (máx. 50) | id, nome, whatsapp_final (4 últimos), ultima_compra_em, num_compras, vendedora_id, vendedora_nome | Base inteira da loja. A partir de 2 caracteres. Só números → busca no WhatsApp; texto → nome sem acento (contém ou semelhança ≥ 0,5) |
 | `mizloja_transferir_cliente` | p_cliente_id, p_para_usuaria_id, p_recado = null | void | Vendedora só transfere clientes dela (ou sem responsável); motivo manual/adm |
 | `mizloja_transferir_carteira` | p_de, p_para | integer (qtd) | Só ADM; motivo desativacao |
-| `mizloja_registrar_acesso` | — | void | |
-| `mizloja_senha_trocada` | — | void | |
+| `mizloja_registrar_acesso` | — | void | Usuária e Admin Miz |
+| `mizloja_senha_trocada` | — | void | Usuária e Admin Miz |
 | `mizloja_tarefas_hoje` | — | cliente_id, nome, whatsapp, pasta, motivo, ultima_compra_em, total_gasto, vendedora_id | Ver regras abaixo |
 
 ### Regras de `mizloja_tarefas_hoje`
@@ -218,3 +225,4 @@ A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feit
 | 20261003211437 | mizloja_permissoes_funcoes |
 | 20261003211600 | mizloja_admin_inicial |
 | 20261003212008 | mizloja_schema_interno |
+| 20261003225159 | mizloja_admins_acesso |
