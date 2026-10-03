@@ -10,7 +10,7 @@ Micro SaaS web (acesso por link, sem instalação) para lojistas que compram da 
 Toda venda registra se teve peça Miz e quais (peça, cor, tamanho, quantidade). Todas as lojas usam o mesmo banco; o isolamento entre lojas é feito por `loja_id` + Row Level Security.
 
 Documentos de referência:
-- `docs/especificacao.md` — especificação do sistema (**ainda não está no repositório**; quando chegar, ler antes de planejar).
+- `docs/especificacao.md` — especificação do sistema v1 (ler antes de planejar qualquer página).
 - `docs/design-system.md` — design system v1 (cores, tipografia, componentes, voz).
 - `docs/BANCO.md` — banco de dados completo (tabelas, funções, RLS, diagrama).
 
