@@ -1,0 +1,29 @@
+{
+  "name": "mizloja",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@fontsource/quicksand": "^5.3.0",
+    "@hookform/resolvers": "^5.9.1",
+    "@phosphor-icons/react": "^2.1.10",
+    "@supabase/supabase-js": "^2.117.2",
+    "@tanstack/react-query": "^5.104.1",
+    "date-fns": "^4.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.89.0",
+    "react-router-dom": "^6.30.6",
+    "zod": "^4.6.5"
+  }
+}

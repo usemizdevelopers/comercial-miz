@@ -66,6 +66,54 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 
 Detalhes, parâmetros e regras em `docs/BANCO.md`.
 
+## Site (frontend)
+Stack: React 18 + Vite + TypeScript strict · Tailwind (tema = tokens) · React Router · TanStack Query · supabase-js v2 (tipado com `types/supabase.ts`) · react-hook-form + zod · @phosphor-icons/react (peso **light**) · date-fns ptBR · @fontsource/quicksand · Vitest.
+
+Comandos: `npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run check` (os quatro juntos, rodar antes de todo commit).
+
+Variáveis (`.env`, nunca commitado; modelo em `.env.example`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_WHATSAPP_SUPORTE_MIZ`. **Nunca** usar a service role key no site.
+
+### Pastas
+```
+src/app/              rotas, providers, guardas
+src/layouts/          layouts dos 3 painéis
+src/components/ui/    design system (importar de '@/components/ui')
+src/components/shared/ peças compostas reutilizáveis
+src/features/<assunto>/ admin-miz, auth, equipe, vendas, clientes, metas, hoje, config, dashboard, dev
+src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn
+src/hooks/            hooks genéricos
+src/styles/           tokens.css (todos os tokens) e globals.css
+```
+
+### Regras do design system no código
+- Cores, raios, espaços, fontes, sombras e durações vêm **só** do tema (`tailwind.config.ts` ← `src/styles/tokens.css`). As paletas e escalas padrão do Tailwind foram removidas: `bg-blue-500`, `text-sm`, `rounded-xl`, `p-7` não existem. Não usar valores arbitrários (`[13px]`, `#fff`); se faltar algo, criar token.
+- Única exceção: a bolinha de cor da peça usa o hex do catálogo (`BolinhaCor`).
+- Classes de texto: `text-display`, `text-h1`, `text-h2`, `text-h3`, `text-body`, `text-body-sm`, `text-label`, `text-overline` (+ `uppercase`), `text-caption`. Mudam de tamanho sozinhas no computador (≥ 1200 px).
+- Breakpoints: `md` = 768 (tablet), `lg` = 1200 (computador). Celular primeiro.
+- Utilitários próprios: `foco` (anel de foco), `alvo-48` (área de toque mínima), `sublinhado`, `numeros` (tabular), `area-segura-baixo/topo`, `acima-do-rodape`.
+- Ícones Phosphor sempre `weight="light"`, tamanhos `h-icone` (20) ou `h-icone-nav` (24).
+
+### Componentes (`src/components/ui`)
+Vitrine viva em `/dev/componentes` (só em `npm run dev`).
+| Componente | Uso |
+| --- | --- |
+| `Button` | `variante`: primario, secundario, texto, whatsapp, destrutivo · `tamanho`: grande 56, medio 48, pequeno 36 · `carregando`, `icone`, `larguraTotal` |
+| `FabVenda` | "+ Venda" do rodapé |
+| `TextField`, `PasswordField` | campo base (forwardRef, funciona com `register`) |
+| `PhoneField` | máscara (31) 99999-9999 — guardar com `normalizarWhatsapp` |
+| `MoneyField` | R$ em reais (`number \| null`), digitação estilo caixa |
+| `SearchField`, `TextArea` (3→6 linhas), `DateParts` + `lerDataPartes` | |
+| `ChipTamanho`, `ChipCor`, `ChipPagamento`, `ChipFiltro`, `ChipGroup`, `BolinhaCor` | |
+| `ChoiceCard`, `QuantityStepper`, `StepIndicator` | |
+| `Card`, `Overline`, `ValorDestaque`, `CardKpi`, `CardPasta`, `CardMeta`, `CardPremio`, `CardPeca` (sem foto), `ItemLinha`, `CardCliente`, `CardVenda` | |
+| `StatusBadge` (6 status), `Selo`, `ProgressBar`, `Skeleton`, `SkeletonCard`, `EmptyState` | |
+| `BottomSheet` (`computador`: central ou lateral), `ConfirmSheet` | |
+| `ToastProvider` + `useToast().mostrar(texto, acao?)` | |
+| `Tabs`, `SegmentedControl`, `TopBar`, `BottomNav`, `Sidebar`, `Logo` | |
+
+### Utilitários (`src/lib`, com testes)
+`normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11).
+
 ## Como trabalhar
 - **Sempre planejar antes de codar:** apresentar o plano (arquivos, migrations, riscos) e esperar aprovação quando a mudança for estrutural.
 - Português do Brasil em tudo que a usuária vê, nos comentários e na documentação.

@@ -11,7 +11,7 @@ A referência é o showroom da Miz e não um painel de software: fundo off white
 | Princípio | Na prática |
 | --- | --- |
 | **Silêncio que deixa o número falar** | Uma informação principal por tela, em tamanho grande ("Faltam R$ 1.680"). O resto é apoio, em tom mais claro. |
-| **Monocromático e quente** | A interface inteira vive nos 14 tons da paleta, do off white ao quase preto. Cor só aparece na foto da peça e na bolinha de cor dela. |
+| **Monocromático e quente** | A interface inteira vive nos 14 tons da paleta, do off white ao quase preto. Cor só aparece na bolinha de cor da peça. |
 | **Linha em vez de sombra** | Separação por bordas de 1 px e espaço em branco. Sombra só em elementos que flutuam (folha inferior, menu). |
 | **Editorial** | Rótulos pequenos em caixa alta e espaçados, títulos firmes, alinhamento à esquerda, divisores finos. Como uma ficha técnica de coleção. |
 | **Um toque resolve** | Alvos grandes (48 px), chips em vez de listas suspensas, botão principal sempre no alcance do polegar. |
@@ -116,7 +116,7 @@ Base de 4 px. Todo espaço do sistema sai desta escala: 4 · 8 · 12 · 16 · 20
 | --- | --- | --- |
 | `radius-sm` | 6 | Chips, selos, campos de quantidade |
 | `radius-md` | 10 | Botões, campos de texto, busca |
-| `radius-lg` | 16 | Cards, imagens de peça, folha inferior |
+| `radius-lg` | 16 | Cards, folha inferior |
 | `radius-full` | 999 | Só bolinha de cor, avatar de iniciais e contador numérico |
 
 Nada de botão em formato de pílula: o raio de 10 é o que separa "sofisticado" de "aplicativo genérico".
@@ -181,7 +181,7 @@ Todo card nasce da mesma base: fundo `surface`, borda 1 px `border-subtle`, raio
 | **Cliente** | Linha 1: nome em `h3` + selo de status à direita. Linha 2: motivo ou situação em `body-sm` `text-secondary` ("Comprou há 5 dias · R$ 289"). Linha 3: botão WhatsApp pequeno à esquerda; "Pular hoje" em botão de texto à direita (só nas pastas) | Pastas de Hoje, kanban, busca |
 | **Pasta** | Retângulo de 1/3 da largura, altura 104. `overline` com o nome da pasta ("PÓS-VENDA") no alto; contador em `display` 32 embaixo, à esquerda. Pasta vazia: contador em `icon-muted`, sem toque | Hoje |
 | **Número (KPI)** | `overline` com o nome ("FATURAMENTO"); valor em `h1` (celular) ou `display` (computador); variação em `caption` ("+12% vs. setembro"), sem seta colorida: sinal + ou − no texto | Visão geral, Metas, Equipe |
-| **Peça Miz** | Foto da peça em proporção 4:5, raio 12, fundo `background-muted`; abaixo, nome em `label` e código em `caption` `text-tertiary`. Selecionado: borda 1,5 `primary` e um pequeno quadrado `primary` com "✓" branco no canto superior direito da foto | Lançar venda, passo 2 |
+| **Peça Miz** | Sem foto (o MIZ Loja não guarda imagens). Altura 64, raio 16, borda 1 px `border-subtle`. À esquerda, nome em `label` e código em `caption` `text-tertiary`; à direita, até 6 bolinhas de 10 px com as cores disponíveis (borda 1 px `border` nas cores claras). Selecionado: borda 1,5 `primary` e fundo `background-muted`. No Lançar venda, as peças aparecem em lista desses cards | Lançar venda, passo 2; Catálogo |
 | **Item adicionado** | Linha única sem borda própria, dentro de um card de lista: bolinha de cor de 12 + "Blusa Mia · Preta · M · 1" em `body` + lixeira de 20 à direita. Divisor entre itens | Lançar venda, resumo da venda |
 | **Venda** | Linha 1: nome da cliente em `h3` + valor à direita em `h3`. Linha 2: itens resumidos em `body-sm` `text-secondary`. Linha 3: data, vendedora e pagamento em `caption` | Lista de vendas, histórico da ficha |
 | **Meta** | `overline` "FALTAM"; valor em `display`; barra de progresso de 8 de altura; linha em `body-sm` com vendido, meta e % | Hoje (versão compacta: sem `display`, só barra e linha), Metas |

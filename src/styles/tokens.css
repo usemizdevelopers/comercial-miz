@@ -1,0 +1,161 @@
+/*
+ * MIZ Loja · tokens do design system (docs/design-system.md, seção 15).
+ * Nenhum componente escreve cor, raio, espaço, sombra ou fonte direto:
+ * tudo sai daqui, pelo tema do Tailwind (tailwind.config.ts).
+ */
+:root {
+  /* Cores (seção 2) */
+  --color-surface: #ffffff;
+  --color-background: #f7f6f3;
+  --color-background-muted: #eeece7;
+  --color-border-subtle: #e6e3db;
+  --color-border: #d1ccc7;
+  --color-border-strong: #beb8b1;
+  --color-icon-muted: #aba49b;
+  --color-text-placeholder: #999085;
+  --color-text-tertiary: #7a7266;
+  --color-text-secondary: #645d54;
+  --color-primary-hover: #4e4841;
+  --color-surface-inverse: #38332e;
+  --color-primary: #221f1c;
+  --color-text-primary: #221f1c;
+  --color-pressed: #000000;
+  --color-on-primary: #ffffff;
+  --color-scrim: rgba(34, 31, 28, 0.4); /* fundo atrás da folha inferior */
+
+  /* Estados (proposta) e seus fundos a 10% */
+  --color-success: #5f6b4f;
+  --color-warning: #8a6638;
+  --color-danger: #9a4a3c;
+  --color-success-soft: rgba(95, 107, 79, 0.1);
+  --color-warning-soft: rgba(138, 102, 56, 0.1);
+  --color-danger-soft: rgba(154, 74, 60, 0.1);
+
+  /* Tipografia (seção 3) — celular */
+  --font-family: 'Quicksand', 'Nunito', sans-serif;
+  --font-regular: 400;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --fs-display: 40px;  --lh-display: 44px;
+  --fs-h1: 24px;       --lh-h1: 30px;
+  --fs-h2: 18px;       --lh-h2: 24px;
+  --fs-h3: 16px;       --lh-h3: 22px;
+  --fs-body: 16px;     --lh-body: 24px;
+  --fs-body-sm: 14px;  --lh-body-sm: 20px;
+  --fs-label: 14px;    --lh-label: 20px;
+  --fs-overline: 11px; --lh-overline: 14px;
+  --fs-caption: 12px;  --lh-caption: 16px;
+  --fs-input: 16px; /* campos sempre 16 px no celular (iPhone não dá zoom) */
+  --fs-pasta: 32px; /* contador do card Pasta */
+
+  --tracking-overline: 0.08em;
+  --tracking-display: -0.01em;
+  --tracking-logo: 0.12em;
+
+  /* Espaço (seção 4) — base de 4 px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-14: 56px;
+  --space-18: 72px;
+
+  /* Medidas de componentes (seções 5 a 8) */
+  --size-touch: 48px;
+  --size-btn-lg: 56px;
+  --size-btn-md: 48px;
+  --size-btn-sm: 36px;
+  --size-field: 52px;
+  --size-field-money: 64px;
+  --size-chip: 44px;
+  --size-chip-filter: 36px;
+  --size-choice: 64px;
+  --size-peca: 64px;
+  --size-topbar: 64px;
+  --size-bottomnav: 72px;
+  --size-pasta: 104px;
+  --size-sidebar: 248px;
+  --size-sidebar-item: 44px;
+  --size-segmented: 40px;
+  --size-badge: 24px;
+  --size-progress: 8px;
+  --size-stepper-w: 120px;
+  --size-step: 24px;
+  --size-step-h: 3px;
+  --size-handle-w: 32px;
+  --size-handle-h: 4px;
+  --size-icon-sm: 16px;
+  --size-icon: 20px;
+  --size-icon-nav: 24px;
+  --size-icon-empty: 32px;
+  --size-icon-success: 48px;
+  --size-dot-lg: 16px;
+  --size-dot: 12px;
+  --size-dot-sm: 10px;
+  --size-logo: 20px;
+  --size-sheet-max: 560px;
+  --size-sheet-max-h: 90dvh;
+  --size-form-max: 720px;
+  --size-content-max: 1200px;
+  --size-banner: 36px;
+
+  /* Grid */
+  --gutter: 20px;
+
+  /* Raios */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Sombras */
+  --shadow-float: 0 8px 24px rgba(34, 31, 28, 0.08);
+  --shadow-fab: 0 6px 16px rgba(34, 31, 28, 0.18);
+  --shadow-top: 0 -1px 0 #e6e3db;
+
+  /* Movimento (seção 10) */
+  --motion-fast: 120ms ease-out;
+  --motion-base: 200ms cubic-bezier(0.2, 0, 0, 1);
+  --motion-slow: 320ms cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-base: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+/* Computador */
+@media (min-width: 1200px) {
+  :root {
+    --gutter: 40px;
+    --fs-display: 48px;  --lh-display: 52px;
+    --fs-h1: 28px;       --lh-h1: 34px;
+    --fs-h2: 20px;       --lh-h2: 26px;
+    --fs-body: 15px;     --lh-body: 22px;
+    --fs-body-sm: 13px;  --lh-body-sm: 18px;
+  }
+}
+
+/* Reduzir movimento: transições viram troca direta */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 1ms linear;
+    --motion-base: 1ms linear;
+    --motion-slow: 1ms linear;
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}

@@ -129,10 +129,10 @@ Oito entidades. Campos marcados "Auto" o sistema preenche; ninguém digita. Apro
 | --- | --- | --- | --- |
 | Referência | Sim: busca por código ou nome | — | Digitar "MZ012" ou "mia" puxa a mesma peça |
 | Cor | Sim: chips só com as cores daquela peça, 1 toque | Sim: campo de texto livre |  |
-| Tamanho | Sim (P / M / G) | Sim (PP a GG, Único) | Chips |
+| Tamanho | Sim (a grade cadastrada da peça: P / M / G, PP/P, M/G…) | Sim (PP a GG, Único) | Chips |
 | Quantidade | Sim, padrão 1 | Sim, padrão 1 | Botões − / + |
 
-**Catálogo Miz** (próprio do MIZ Loja, igual para todas as lojas, mantido pela Admin Miz no painel Catálogo): peça (nome, código único, base/composição, ativa), cores (nome e hex da bolinha), tamanhos e fotos. Carga inicial: cópia das 18 peças do app MIZ, sem vínculo com ele. Peça ou cor já usada em venda não se apaga, só se desativa.
+**Catálogo Miz** (próprio do MIZ Loja, igual para todas as lojas, mantido pela Admin Miz no painel Catálogo): peça (nome, código único, base/composição, ativa), cores (nome e hex da bolinha) e tamanhos. **Sem fotos:** o MIZ Loja não guarda imagens de peça; a peça é reconhecida pelo nome, código e bolinhas de cor. Carga inicial: cópia das 18 peças do app MIZ, sem vínculo com ele. Peça ou cor já usada em venda não se apaga, só se desativa.
 
 **Meta e prêmio**
 
@@ -160,7 +160,6 @@ Todas as lojistas Miz usam o mesmo banco. Por isso, toda tabela deste sistema le
 | `mizloja_pecas` | Catálogo: peças Miz | Não, comum a todas |
 | `mizloja_peca_cores` | Cores de cada peça, com hex | Não, comum a todas |
 | `mizloja_peca_tamanhos` | Grade de tamanhos de cada peça | Não, comum a todas |
-| `mizloja_peca_imagens` | Fotos de cada peça | Não, comum a todas |
 | `mizloja_clientes` | Cadastro e campos calculados da cliente | Sim |
 | `mizloja_vendas` | Cabeçalho da venda: cliente, vendedora, valor, pagamento, data | Sim |
 | `mizloja_venda_itens` | Peças de cada venda | Sim, via venda |
@@ -253,8 +252,8 @@ Pergunta: **"Tem peça Miz neste pedido?"** \[Sim\] \[Não\]
 
 **Se Sim**
 
-1. Campo de busca da peça no topo: digitar o **código** (ex.: "MZ012") ou parte do **nome** ("mia") filtra na hora. Abaixo, a grade de cartões com foto, nome e código das peças Miz ativas. Toque escolhe a peça.
-2. Aparecem só as cores daquela peça (chips com bolinha de cor + nome, 1 toque) e os tamanhos P / M / G.
+1. Campo de busca da peça no topo: digitar o **código** (ex.: "MZ012") ou parte do **nome** ("mia") filtra na hora. Abaixo, a lista de cartões das peças Miz ativas (sem foto): nome, código e as bolinhas das cores disponíveis. Toque escolhe a peça.
+2. Aparecem só as cores ativas daquela peça (chips com bolinha de cor + nome, 1 toque) e os tamanhos da grade dela (P / M / G, ou PP/P e M/G).
 3. Quantidade com − / +, padrão 1.
 4. &#91;Adicionar peça\] fecha o item numa linha-resumo ("Blusa Mia · Preta · M · 1", com lixeira) e reabre a busca para a próxima.
 5. Abaixo, uma pergunta discreta: "Tem peça de outra marca também?" Se sim, abre o bloco "Outras peças" (abaixo).
