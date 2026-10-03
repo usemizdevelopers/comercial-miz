@@ -23,8 +23,8 @@ export function LayoutAdm() {
   }
 
   const itensLaterais = [
-    ...NAV_ADM.map((d) => ({ id: d.rota, rotulo: d.rotulo, icone: d.icone, ativo: rotaAtiva(d, pathname), onClick: () => navegar(d.rota) })),
-    { id: 'modo-vendedora', rotulo: 'Modo vendedora', icone: ICONE_MODO_VENDEDORA, onClick: entrarModoVendedora },
+    ...NAV_ADM.map((d) => ({ id: d.rota, rotulo: d.rotulo, icone: <d.icone weight="light" />, ativo: rotaAtiva(d, pathname), onClick: () => navegar(d.rota) })),
+    { id: 'modo-vendedora', rotulo: 'Modo vendedora', icone: <ICONE_MODO_VENDEDORA weight="light" />, onClick: entrarModoVendedora },
   ]
 
   const doRodape = NAV_ADM.filter((d) => NAV_ADM_RODAPE_ROTAS.includes(d.rota))
@@ -32,8 +32,8 @@ export function LayoutAdm() {
   const maisAtivo = doMais.some((d) => rotaAtiva(d, pathname))
 
   const itensRodape = [
-    ...doRodape.map((d) => ({ id: d.rota, rotulo: d.rotulo, icone: d.icone, ativo: rotaAtiva(d, pathname), onClick: () => navegar(d.rota) })),
-    { id: 'mais', rotulo: 'Mais', icone: ICONE_MAIS, ativo: maisAtivo, onClick: () => setMaisAberto(true) },
+    ...doRodape.map((d) => ({ id: d.rota, rotulo: d.rotulo, icone: <d.icone weight="light" />, ativo: rotaAtiva(d, pathname), onClick: () => navegar(d.rota) })),
+    { id: 'mais', rotulo: 'Mais', icone: <ICONE_MAIS weight="light" />, ativo: maisAtivo, onClick: () => setMaisAberto(true) },
   ]
 
   const itemMais = 'foco flex min-h-toque w-full items-center gap-3 rounded-md px-3 text-label transition-[background-color] duration-fast ease-out hover:bg-background-muted [&>svg]:h-icone-nav [&>svg]:w-icone-nav'
@@ -66,7 +66,7 @@ export function LayoutAdm() {
                 navegar(d.rota)
               }}
             >
-              {d.icone}
+              <d.icone weight="light" />
               {d.rotulo}
             </button>
           ))}
@@ -78,7 +78,7 @@ export function LayoutAdm() {
               entrarModoVendedora()
             }}
           >
-            {ICONE_MODO_VENDEDORA}
+            <ICONE_MODO_VENDEDORA weight="light" />
             Modo vendedora
           </button>
           <div className="my-2 border-t border-border-subtle" />

@@ -16,7 +16,7 @@ export function LayoutAdminMiz() {
   const itens = NAV_ADMIN_MIZ.map((d) => ({
     id: d.rota,
     rotulo: d.rotulo,
-    icone: d.icone,
+    icone: <d.icone weight="light" />,
     ativo: rotaAtiva(d, pathname),
     onClick: () => navegar(d.rota),
   }))
