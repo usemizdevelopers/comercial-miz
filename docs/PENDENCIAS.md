@@ -28,5 +28,5 @@ Itens conhecidos que ficaram para depois. Os testes que dependem de rede estão 
 
 ## Produto (próximas etapas)
 
-- Etapas 3 a 6 conforme `CLAUDE.md` (3 Equipe e Configurações; 4 Clientes e Lançar venda; 5 Hoje e Metas; 6 Visão geral e Vendas) e depois a revisão final. As rotas já existem como "Em construção · Etapa X".
+- Painel da vendedora pronto (Prompt 3). Próximo: painel da ADM (rotas `/adm/*` ainda "Em construção"); depois, a revisão final.
 - Sincronização futura do catálogo com `public.pecas` do app MIZ: hoje é cópia única (`origem_id` só como referência); qualquer sincronização precisa de aprovação explícita.

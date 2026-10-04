@@ -15,7 +15,7 @@ Documentos de referência:
 - `docs/BANCO.md` — banco de dados completo (tabelas, funções, RLS, diagrama).
 
 ## Etapas
-1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · 3. ADM: Equipe e Configurações · 4. Clientes (kanban e ficha) e Lançar venda · 5. Hoje e Metas (vendedora e ADM) · 6. ADM: Visão geral e Vendas · depois: revisão final.
+1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · Painel da vendedora (Lançar venda, Ficha, Clientes, Hoje, Metas, Perfil) ✅ no Prompt 3 (testes no site: `docs/TESTES-PENDENTES.md`, seção Prompt 3) · Próximo (Prompt 4): painel da ADM — Equipe, Configurações, Clientes, Metas e prêmios, Vendas e Visão geral (rotas `/adm/*` ainda provisórias) · depois: revisão final.
 Pendências e decisões em aberto: `docs/PENDENCIAS.md`.
 
 ## Independência do app MIZ (REGRA ABSOLUTA)
@@ -63,7 +63,13 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 | `mizloja_registrar_acesso()` | Grava último acesso |
 | `mizloja_senha_trocada()` | Marca senha provisória trocada |
 | `mizloja_tarefas_hoje()` | Pastas da tela Hoje com motivo pronto |
-| view `mizloja_v_clientes` | Clientes + status + etapa do kanban + aniversário |
+| `mizloja_salvar_venda(venda_id, cliente_id, valor, pagamento, itens, data, cliente_nova)` | **Lançar venda**: cliente nova + venda + itens numa transação; id vem do navegador e reenviar não duplica |
+| `mizloja_meu_resumo_mes(mes)` / `mizloja_meu_historico_metas(meses)` | Meta, vendido, ticket, clientes novas, dias, R$/dia e prêmio da usuária logada / meses anteriores |
+| `mizloja_minhas_vendas_hoje()` | Total do dia e as 3 últimas vendas da usuária |
+| `mizloja_cores_usadas(limite)` | Sugestões de cor para peça de outra marca |
+| `mizloja_ranking_mes(mes)` | Posição e nomes da equipe (sem valores), só com `ranking_visivel` |
+| `mizloja_alterar_meu_nome(nome)` | Perfil: a usuária troca o próprio nome |
+| view `mizloja_v_clientes` | Clientes + status + etapa do kanban + aniversário + valor da última compra |
 
 Detalhes, parâmetros e regras em `docs/BANCO.md`.
 
@@ -83,8 +89,8 @@ src/layouts/          layouts dos 3 painéis
 src/components/ui/    design system (importar de '@/components/ui')
 src/components/shared/ peças compostas reutilizáveis
 src/features/<assunto>/ admin-miz, auth, equipe, vendas, clientes, metas, hoje, config, dashboard, dev
-src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn, acesso, funcoes, cores
-src/hooks/            hooks genéricos
+src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn, acesso, funcoes, cores, vendas, texto, id
+src/hooks/            useDadosLoja (equipe, config, mensagens, catálogo), useAtraso, useConexao, useTelaGrande, usePressionarLongo, useAoVoltarParaAba
 src/styles/           tokens.css (todos os tokens) e globals.css
 ```
 
@@ -114,18 +120,20 @@ Vitrine viva em `/dev/componentes` (só em `npm run dev`).
 | `ToastProvider` + `useToast().mostrar(texto, acao?)` | |
 | `Tabs`, `SegmentedControl`, `TopBar`, `BottomNav`, `Sidebar`, `Logo` | |
 | `SelectField` | lista de opções nativa com o visual dos campos |
+| `Deslizavel` | deslizar o cartão para o lado ("Pular hoje"); sempre com um botão da mesma ação |
 
 ### Utilitários (`src/lib`, com testes)
-`normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11).
+`normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11) · `formatarAniversario`, `formatarHora`, `saudacao` · `semAcento` · `novoId` · vendas: `PAGAMENTOS`, `rotuloPagamento`, `TAMANHOS_OUTRA`, `rotuloTamanho`, `textoItem` ("Blusa Mia · Preta · M · 1"), `resumirItens` ("Blusa Mia Preta M + 1 peça"), `instanteDaVenda`.
 
 ### Rotas (`src/app/rotas.tsx`)
 Páginas carregadas sob demanda (`lazy`). As que ainda não existem usam `PaginaEmConstrucao` ("Em construção · Etapa X"): cada etapa troca o elemento pela página real.
 | Rota | Quem | Página / etapa |
 | --- | --- | --- |
 | `/entrar`, `/trocar-senha` | deslogada / troca obrigatória | `features/auth` |
-| `/hoje` · `/metas` | vendedora (e ADM em modo vendedora) | etapa 5 |
-| `/clientes`, `/clientes/:id`, `/venda/nova` | vendedora | etapa 4 |
-| `/perfil` | vendedora | provisória com "Sair" |
+| `/hoje` · `/metas` | vendedora (e ADM em modo vendedora) | prontas (`features/hoje`, `features/metas`) |
+| `/clientes` (`?coluna=`, `?filtro=sem_interesse`), `/clientes/:id` | vendedora | prontas (`features/clientes`) |
+| `/venda/nova` (`?cliente=:id` pula o passo 1) | vendedora | pronta (`features/vendas`) |
+| `/perfil` | vendedora | pronta (`features/perfil`) |
 | `/adm` · `/adm/vendas` | ADM | etapa 6 |
 | `/adm/clientes` | ADM | etapa 4 |
 | `/adm/equipe` · `/adm/config` | ADM | etapa 3 |
@@ -159,7 +167,20 @@ Tudo que cria conta no Auth, gera senha ou bloqueia login passa por Edge Functio
 - `AcessoCriado` mostra usuário e senha **uma vez** (componente `AcessoCriado`, com "Enviar pelo WhatsApp" e "Copiar").
 
 ### Componentes compartilhados (`src/components/shared`)
-`TelaCarregando`, `PaginaEmConstrucao`, `AcessoCriado`, `CabecalhoPagina` (título, subtítulo, ação), `ListaCarregando` (em `EstadoCarregando`).
+`TelaCarregando`, `PaginaEmConstrucao`, `AcessoCriado`, `CabecalhoPagina` (título, subtítulo, ação), `ListaCarregando` (em `EstadoCarregando`), `BotaoWhatsapp` (registra o contato com a pasta, ou sem pasta fora de Hoje, e abre o wa.me).
+
+### Painel da vendedora (padrões)
+- Tudo vale igual para a vendedora e para a ADM em modo vendedora: vendas, contatos e pulos ficam em nome de quem está logada.
+- **WhatsApp de cliente:** sempre `BotaoWhatsapp`. Ele dispara o registro em `mizloja_contatos` e abre o wa.me na hora, sem esperar a resposta: esperar faz o celular bloquear a nova aba. Mensagem pronta só em Pós-venda e Aniversário (`montarMensagem` com o texto de `mizloja_mensagens`).
+- **Chaves do TanStack Query:** `['clientes', …]` (lista e busca), `['cliente', id, …]` (ficha, vendas, linha do tempo), `['hoje', …]`, `['metas', …]`, `['loja', …]` (equipe, config, mensagens, catálogo, 5 min de cache). Depois de gravar, invalide as que mudam: venda → metas, hoje, clientes e cliente.
+- Tabelas cuja loja/usuária vem do gatilho (`mizloja_contatos`, `mizloja_pulos`): grave só as colunas liberadas (`cliente_id`, `pasta`) e faça o cast para `TablesInsert`.
+- Kanban: regras puras em `features/clientes/kanban.ts` (filtros, mover, agrupar). Mover à mão só entre Novas, Em conversa e Sem interesse (`etapa_manual`); as demais colunas são calculadas pela view.
+
+### Lançar venda e fila sem conexão (`src/features/vendas`)
+- Estado único (`EstadoVenda` em `rascunho.ts`) para os 3 passos; "Voltar" só muda `passo`. Rascunho em `localStorage` (`mizloja-rascunho-venda:<usuária>`), gravado só quando há conteúdo; ao reabrir, "Continuar a venda da [nome]?".
+- Cliente nova não é gravada no passo 1: vai junto com a venda em `mizloja_salvar_venda` (`cliente_nova`), com id gerado no navegador (`novoId`).
+- Salvar: `salvarVenda(pacote)`. Sem conexão (ou erro de rede), o pacote vai para a fila (`fila.ts`, `localStorage` `mizloja-fila-vendas`) com o mesmo id da venda. `AvisoFilaVendas` (no `LayoutVendedora`) mostra "1 venda aguardando envio" e reenvia ao abrir, quando a conexão volta e a cada 30 s. Reenviar não duplica. Venda recusada pelo banco fica na faixa com o motivo e pode ser descartada.
+- Barra de ação presa acima do rodapé: classes `barra-acao` + `espaco-barra-acao` (em `globals.css`).
 
 ### Loja Demonstração e deploy
 - Demonstração: `docs/DEMO.md` (função `mizloja-seed-demo` + `supabase/seed-demo/dados.sql` e `verificar.sql`; CNPJ de teste 99.999.999/0001-91).

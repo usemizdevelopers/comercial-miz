@@ -81,10 +81,11 @@ export function lerRascunho(usuariaId: string): EstadoVenda | null {
   }
 }
 
+/** Grava só quando há conteúdo; um formulário vazio nunca apaga um rascunho anterior (apagar = apagarRascunho). */
 export function guardarRascunho(usuariaId: string, e: EstadoVenda) {
+  if (!temConteudo(e)) return
   try {
-    if (temConteudo(e)) localStorage.setItem(chave(usuariaId), JSON.stringify(e))
-    else localStorage.removeItem(chave(usuariaId))
+    localStorage.setItem(chave(usuariaId), JSON.stringify(e))
   } catch {
     // sem armazenamento: segue sem rascunho
   }

@@ -174,6 +174,13 @@ Por vendedora: `meta_id`, `loja_id` (copiado), `usuaria_id`, `valor` (nulo = sem
 | `mizloja_registrar_acesso` | — | void | Usuária e Admin Miz |
 | `mizloja_senha_trocada` | — | void | Usuária e Admin Miz |
 | `mizloja_tarefas_hoje` | — | cliente_id, nome, whatsapp, pasta, motivo, ultima_compra_em, total_gasto, vendedora_id | Ver regras abaixo |
+| `mizloja_salvar_venda` | p_venda_id, p_cliente_id, p_valor_total, p_forma_pagamento, p_itens jsonb, p_data_venda = now(), p_cliente_nova jsonb = null | jsonb `{venda_id, cliente_id, ja_existia}` | Invoker. **Usada pela tela Lançar venda.** O id da venda (e da cliente nova) vem do navegador: reenviar a mesma venda (fila sem conexão) devolve a que já existe, sem duplicar. Cliente nova `{nome, whatsapp, aniv_dia, aniv_mes, aniv_ano}` é criada na mesma transação; se o WhatsApp já existe na loja, usa a cliente existente. Mínimo 1 item; vendedora = usuária logada |
+| `mizloja_meu_resumo_mes` | p_mes = mês atual | mes, meta_individual, meta_loja (só sem individual), vendido_loja, vendido, num_vendas, ticket_medio, clientes_novas, dias_restantes, valor_por_dia, premio_descricao, premio_condicao_pct, premio_extra_descricao, premio_extra_pct, premio_conquistado, premio_extra_conquistado | Invoker. Só metas publicadas. Prêmio só com meta individual e `premio_elegivel`. Clientes novas = 1ª compra (não excluída) no mês, feita por ela. Dias restantes contam hoje |
+| `mizloja_meu_historico_metas` | p_meses = 6 (máx. 24) | mes, vendido, meta, percentual, premio_ganho (nulo = mês sem prêmio) | Invoker. Meses anteriores ao atual |
+| `mizloja_minhas_vendas_hoje` | — | total_dia, num_vendas, ultimas jsonb (3 últimas: id, cliente, valor, data, pagamento, itens) | Invoker. Hoje em São Paulo, vendas da usuária logada |
+| `mizloja_cores_usadas` | p_limite = 40 | cor, usos | Invoker. Cores de outra marca já usadas na loja (agrupadas sem acento), para sugerir ao digitar |
+| `mizloja_ranking_mes` | p_mes = mês atual | posicao, nome, sou_eu | Invoker. **Sem valores.** Vazio se `ranking_visivel` = false. Vendedoras ativas (e a ADM, se for ela) |
+| `mizloja_alterar_meu_nome` | p_nome | text | Definer. Perfil: a usuária logada troca só o próprio nome (2 a 80 letras) |
 
 ### Regras de `mizloja_tarefas_hoje`
 Uma pasta por cliente, prioridade **aniversario > pos_venda > follow_up**. Fora: `sem_interesse` e puladas hoje pela usuária. Vendedora vê as próprias (ou todas, se `visibilidade_vendedora = todas`); ADM vê as próprias.
@@ -184,7 +191,8 @@ Uma pasta por cliente, prioridade **aniversario > pos_venda > follow_up**. Fora:
 ### View `mizloja_v_clientes` (security_invoker)
 Todas as colunas de clientes + `vendedora_nome`, `dias_sem_comprar`, `proximo_aniversario`, `dias_para_aniversario`, e:
 - **status:** nova (0 compras) · vip (3+ compras e < dias_sumida) · ativa (< dias_recompra) · esfriando (< dias_sumida) · sumida (≤ dias_inativa) · inativa.
-- **etapa_kanban:** sem_interesse · sem compra: em_conversa (manual ou já contatada) ou novas · com compra: comprou (≤ dias_comprou), ativa (< dias_recompra), recompra (< dias_sumida), sumidas.
+- **etapa_kanban:** sem_interesse · sem compra: a etapa manual (novas ou em_conversa) quando existe; senão em_conversa se já contatada, ou novas · com compra: comprou (≤ dias_comprou), ativa (< dias_recompra), recompra (< dias_sumida), sumidas.
+- **ultima_compra_valor:** valor da última venda não excluída (cartão do kanban).
 
 A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feito na tela.
 
@@ -214,8 +222,8 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | mizloja_pecas | nome, codigo_referencia, categoria, composicao, ativa, esgotado | os mesmos | sim (bloqueado se já vendida) |
 | mizloja_peca_cores | peca_id, nome, valor, ordem, ativa | nome, valor, ordem, ativa | sim (bloqueado se já vendida) |
 | mizloja_peca_tamanhos | peca_id, valor, ordem | ordem | sim |
-| mizloja_clientes | loja_id, nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, vendedora_id, etapa_manual | nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, etapa_manual, recado_transferencia | sim (só ADM, pelo RLS) |
-| mizloja_vendas | cliente_id, vendedora_id, data_venda, valor_total, forma_pagamento | os mesmos + excluida, motivo_exclusao | — (exclusão lógica) |
+| mizloja_clientes | id, loja_id, nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, vendedora_id, etapa_manual | nome, whatsapp, aniv_dia/mes/ano, observacoes, origem, etapa_manual, recado_transferencia | sim (só ADM, pelo RLS) |
+| mizloja_vendas | id, cliente_id, vendedora_id, data_venda, valor_total, forma_pagamento | os mesmos + excluida, motivo_exclusao | — (exclusão lógica) |
 | mizloja_venda_itens | venda_id, tipo, peca_id, peca_cor_id, cor, cor_hex, tamanho, quantidade | os mesmos, menos venda_id | sim |
 | mizloja_metas | loja_id, mes, valor_loja, status, premio_* | mes, valor_loja, status, premio_* | sim |
 | mizloja_metas_vendedoras | meta_id, usuaria_id, valor, premio_elegivel | valor, premio_elegivel | sim |
@@ -224,6 +232,8 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | mizloja_mensagens | — | texto | — |
 | mizloja_config | — | dias_*, visibilidade_vendedora, ranking_visivel | — |
 | mizloja_transferencias, mizloja_alteracoes | — | — | — |
+
+`id` em clientes e vendas: o navegador escolhe o id (uuid) da venda e da cliente nova, para a fila sem conexão reenviar sem duplicar (migration `mizloja_painel_vendedora`).
 
 ## Migrations aplicadas
 | Versão | Nome |
@@ -250,6 +260,10 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | 20261003231852 | mizloja_catalogo_campos |
 | 20261003232108 | mizloja_venda_minimo_um_item |
 | 20261003232159 | mizloja_permissoes_colunas |
+| 20261004001947 | mizloja_painel_vendedora |
+| 20261004003321 | mizloja_kanban_etapa_manual |
+| 20261004003421 | mizloja_v_clientes_valor_ultima_compra |
+| 20261004004124 | mizloja_alterar_meu_nome |
 | pendente | mizloja_sem_imagens (`supabase/migrations-pendentes/`) |
 
 ## Edge Functions (escrita com service role)
