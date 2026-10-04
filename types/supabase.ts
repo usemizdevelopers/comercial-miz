@@ -2157,6 +2157,13 @@ export type Database = {
           whatsapp_final: string
         }[]
       }
+      mizloja_cores_usadas: {
+        Args: { p_limite?: number }
+        Returns: {
+          cor: string
+          usos: number
+        }[]
+      }
       mizloja_data_local: { Args: { p_instante: string }; Returns: string }
       mizloja_eh_interno: { Args: never; Returns: boolean }
       mizloja_hoje: { Args: never; Returns: string }
@@ -2171,6 +2178,45 @@ export type Database = {
         }
         Returns: string
       }
+      mizloja_meu_historico_metas: {
+        Args: { p_meses?: number }
+        Returns: {
+          mes: string
+          meta: number
+          percentual: number
+          premio_ganho: boolean
+          vendido: number
+        }[]
+      }
+      mizloja_meu_resumo_mes: {
+        Args: { p_mes?: string }
+        Returns: {
+          clientes_novas: number
+          dias_restantes: number
+          mes: string
+          meta_individual: number
+          meta_loja: number
+          num_vendas: number
+          premio_condicao_pct: number
+          premio_conquistado: boolean
+          premio_descricao: string
+          premio_extra_conquistado: boolean
+          premio_extra_descricao: string
+          premio_extra_pct: number
+          ticket_medio: number
+          valor_por_dia: number
+          vendido: number
+          vendido_loja: number
+        }[]
+      }
+      mizloja_minhas_vendas_hoje: {
+        Args: never
+        Returns: {
+          num_vendas: number
+          total_dia: number
+          ultimas: Json
+        }[]
+      }
       mizloja_normalizar_whatsapp: {
         Args: { p_valor: string }
         Returns: string
@@ -2179,11 +2225,31 @@ export type Database = {
         Args: { p_dia: number; p_mes: number; p_ref: string }
         Returns: string
       }
+      mizloja_ranking_mes: {
+        Args: { p_mes?: string }
+        Returns: {
+          nome: string
+          posicao: number
+          sou_eu: boolean
+        }[]
+      }
       mizloja_recalcular_cliente: {
         Args: { p_cliente_id: string }
         Returns: undefined
       }
       mizloja_registrar_acesso: { Args: never; Returns: undefined }
+      mizloja_salvar_venda: {
+        Args: {
+          p_cliente_id: string
+          p_cliente_nova?: Json
+          p_data_venda?: string
+          p_forma_pagamento: string
+          p_itens: Json
+          p_valor_total: number
+          p_venda_id: string
+        }
+        Returns: Json
+      }
       mizloja_sem_acento: { Args: { p_texto: string }; Returns: string }
       mizloja_senha_trocada: { Args: never; Returns: undefined }
       mizloja_tarefas_hoje: {
