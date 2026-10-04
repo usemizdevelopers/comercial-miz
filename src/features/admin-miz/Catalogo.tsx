@@ -7,7 +7,7 @@ import { CabecalhoPagina } from '@/components/shared/CabecalhoPagina'
 import { ListaCarregando } from '@/components/shared/EstadoCarregando'
 import { mensagemDeErro } from '@/lib/erros'
 import { listarPecas } from './api'
-import { semAcento } from './texto'
+import { semAcento } from '@/lib/texto'
 
 type Filtro = 'ativas' | 'inativas' | 'todas'
 

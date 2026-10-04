@@ -10,7 +10,7 @@ import { formatarData } from '@/lib/formatadores'
 import { mensagemDeErro } from '@/lib/erros'
 import { listarLojas, type LojaResumo } from './api'
 import { NovaLoja } from './NovaLoja'
-import { semAcento } from './texto'
+import { semAcento } from '@/lib/texto'
 
 function SeloSituacao({ situacao }: { situacao: string }) {
   return situacao === 'ativa' ? <Selo tom="contorno">Ativa</Selo> : <Selo tom="perigo">Inativa</Selo>

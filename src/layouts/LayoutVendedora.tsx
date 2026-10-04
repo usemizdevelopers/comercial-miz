@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { BottomNav, Sidebar } from '@/components/ui'
 import { useSessao } from '@/app/sessao/sessaoContexto'
+import { AvisoFilaVendas } from '@/features/vendas/AvisoFilaVendas'
 import { NAV_VENDEDORA, rotaAtiva } from './navegacao'
 
 /**
@@ -45,6 +46,7 @@ export function LayoutVendedora() {
           </button>
         </div>
       )}
+      <AvisoFilaVendas />
       <main className="pb-rodape lg:pb-10">
         <div className="area-segura-baixo">
           <Outlet />

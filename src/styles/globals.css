@@ -66,9 +66,25 @@
   .acima-do-rodape {
     padding-bottom: calc(var(--size-bottomnav) + var(--space-4) + env(safe-area-inset-bottom));
   }
+  /* Barra de ação presa logo acima do rodapé (ex.: "Salvar venda"); no computador, no pé da tela, ao lado da barra lateral */
+  .barra-acao {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--size-bottomnav) + env(safe-area-inset-bottom));
+    z-index: 20;
+  }
+  /* Espaço no fim da página para o conteúdo não ficar atrás da barra de ação */
+  .espaco-barra-acao {
+    height: calc(var(--size-btn-lg) + var(--space-8));
+  }
   @media (min-width: 1200px) {
     .acima-do-rodape {
       padding-bottom: var(--space-6);
+    }
+    .barra-acao {
+      left: var(--size-sidebar);
+      bottom: 0;
     }
   }
   .numeros {
