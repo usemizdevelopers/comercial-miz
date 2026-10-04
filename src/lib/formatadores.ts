@@ -56,12 +56,14 @@ export function formatarData(data: Date | string | number): string {
   return format(dataLocal(data), 'dd/MM/yyyy')
 }
 
+/** 14:32 (São Paulo) */
+export function formatarHora(data: Date | string | number): string {
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' }).format(new Date(data))
+}
+
 /** 03/10/2026 · 14:32 */
 export function formatarDataHora(data: Date | string | number): string {
-  const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' }).format(
-    new Date(data),
-  )
-  return `${formatarData(data)} · ${hora}`
+  return `${formatarData(data)} · ${formatarHora(data)}`
 }
 
 /** "sábado, 3 de outubro" */
@@ -99,4 +101,12 @@ export function formatarAniversario(dia: number | null | undefined, mes: number 
   if (!dia || !mes) return ''
   const base = format(new Date(2000, mes - 1, dia), "d 'de' MMMM", { locale: ptBR })
   return ano ? `${base} de ${ano}` : base
+}
+
+/** "Bom dia" até 11h59, "Boa tarde" até 17h59, depois "Boa noite" (hora de São Paulo). */
+export function saudacao(agora: Date = new Date()): string {
+  const hora = Number(new Intl.DateTimeFormat('en-GB', { timeZone: FUSO, hour: '2-digit', hourCycle: 'h23' }).format(agora))
+  if (hora < 12) return 'Bom dia'
+  if (hora < 18) return 'Boa tarde'
+  return 'Boa noite'
 }

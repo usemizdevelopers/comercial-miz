@@ -1,4 +1,4 @@
-import { dataRelativa, formatarAniversario, formatarData, formatarDiaMesCurto, formatarMoeda, formatarValor, haDias } from './formatadores'
+import { dataRelativa, formatarAniversario, formatarData, formatarDiaMesCurto, formatarMoeda, formatarValor, haDias, saudacao } from './formatadores'
 
 const nbsp = ' '
 
@@ -44,5 +44,13 @@ describe('formatarAniversario', () => {
     expect(formatarAniversario(6, 10)).toBe('6 de outubro')
     expect(formatarAniversario(29, 2, 1992)).toBe('29 de fevereiro de 1992')
     expect(formatarAniversario(null, 3)).toBe('')
+  })
+})
+
+describe('saudacao', () => {
+  it('pelo horário de São Paulo', () => {
+    expect(saudacao(new Date('2026-10-03T11:00:00Z'))).toBe('Bom dia') // 8h
+    expect(saudacao(new Date('2026-10-03T18:30:00Z'))).toBe('Boa tarde') // 15h30
+    expect(saudacao(new Date('2026-10-04T01:00:00Z'))).toBe('Boa noite') // 22h
   })
 })

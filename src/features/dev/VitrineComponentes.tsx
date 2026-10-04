@@ -31,6 +31,7 @@ import {
   ChoiceCard,
   ConfirmSheet,
   DateParts,
+  Deslizavel,
   EmptyState,
   FabVenda,
   ItemLinha,
@@ -338,6 +339,14 @@ export default function VitrineComponentes() {
               }
               onClick={() => toast.mostrar('Abrir ficha')}
             />
+            <Deslizavel rotulo="Pular hoje" onDeslizar={() => toast.mostrar('Pulada até amanhã')}>
+              <CardCliente
+                nome="Larissa Moura (deslize para o lado)"
+                selo={<Selo tom="alerta">Aniversário</Selo>}
+                linha2="Aniversário hoje"
+                acoes={<Button variante="whatsapp" tamanho="pequeno" />}
+              />
+            </Deslizavel>
             <CardVenda cliente="Ana Paula Ribeiro" valor={289.8} itens="Blusa Mia Preta M + 1 peça" rodape="03/10 · Carla · PIX" onClick={() => {}} />
           </div>
         </Secao>

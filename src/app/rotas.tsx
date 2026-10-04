@@ -17,6 +17,7 @@ const Admins = lazy(() => import('@/features/admin-miz/Admins'))
 const LancarVenda = lazy(() => import('@/features/vendas/LancarVenda'))
 const FichaCliente = lazy(() => import('@/features/clientes/FichaCliente'))
 const Clientes = lazy(() => import('@/features/clientes/Clientes'))
+const Hoje = lazy(() => import('@/features/hoje/Hoje'))
 // Vitrine dos componentes: só existe em desenvolvimento (fica fora do build de produção)
 const VitrineComponentes = import.meta.env.DEV ? lazy(() => import('@/features/dev/VitrineComponentes')) : null
 
@@ -53,7 +54,7 @@ export function Rotas() {
           </Protegida>
         }
       >
-        <Route path="/hoje" element={<PaginaEmConstrucao titulo="Hoje" etapa={5} descricao="Quanto falta para a meta e quem chamar hoje." />} />
+        <Route path="/hoje" element={<Hoje />} />
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/clientes/:id" element={<FichaCliente />} />
         <Route path="/venda/nova" element={<LancarVenda />} />
