@@ -43,7 +43,7 @@ function paraView(c: Tables<'mizloja_v_clientes'>): ClienteView {
 }
 
 const COLUNAS_LISTA =
-  'id, nome, whatsapp, status, etapa_kanban, etapa_manual, vendedora_id, vendedora_nome, num_compras, total_gasto, ultima_compra_em, dias_sem_comprar, dias_para_aniversario, proximo_aniversario, aniv_dia, aniv_mes'
+  'id, nome, whatsapp, status, etapa_kanban, etapa_manual, vendedora_id, vendedora_nome, num_compras, total_gasto, ultima_compra_em, ultima_compra_valor, dias_sem_comprar, dias_para_aniversario, proximo_aniversario, aniv_dia, aniv_mes'
 
 /** Base inteira da loja para o kanban (a tela filtra Minhas/Todas). */
 export async function listarClientes(): Promise<ClienteView[]> {

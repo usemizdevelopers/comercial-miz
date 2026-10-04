@@ -206,21 +206,26 @@ export function ItemLinha({ hex, texto, onRemover }: { hex?: string | null; text
 export function CardCliente({
   nome,
   status,
+  selo,
   linha2,
   acoes,
   onClick,
+  className,
+  ...props
 }: {
   nome: string
   status?: StatusCliente
+  /** selo no lugar do status (ex.: <Selo>Aniversário</Selo>) */
+  selo?: ReactNode
   linha2?: ReactNode
   acoes?: ReactNode
   onClick?: () => void
-}) {
+} & Omit<HTMLAttributes<HTMLDivElement>, 'onClick'>) {
   return (
-    <Card tocavel={!!onClick} onClick={onClick} className="flex flex-col gap-3">
+    <Card tocavel={!!onClick} onClick={onClick} className={cn('flex flex-col gap-3', className)} {...props}>
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 truncate text-h3">{nome}</p>
-        {status && <StatusBadge status={status} />}
+        {selo ?? (status && <StatusBadge status={status} />)}
       </div>
       {linha2 && <p className="truncate text-body-sm text-text-secondary">{linha2}</p>}
       {acoes && (

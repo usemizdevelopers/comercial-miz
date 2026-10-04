@@ -2103,6 +2103,7 @@ export type Database = {
           ticket_medio: number | null
           total_gasto: number | null
           ultima_compra_em: string | null
+          ultima_compra_valor: number | null
           ultimo_contato_em: string | null
           ultimo_contato_por: string | null
           updated_at: string | null
