@@ -2146,6 +2146,7 @@ export type Database = {
     Functions: {
       is_admin: { Args: never; Returns: boolean }
       is_approved: { Args: never; Returns: boolean }
+      mizloja_alterar_meu_nome: { Args: { p_nome: string }; Returns: string }
       mizloja_buscar_clientes: {
         Args: { p_limite?: number; p_termo: string }
         Returns: {

@@ -5,7 +5,6 @@ import { LayoutVendedora } from '@/layouts/LayoutVendedora'
 import { LayoutAdm } from '@/layouts/LayoutAdm'
 import { LayoutAdminMiz } from '@/layouts/LayoutAdminMiz'
 import { Protegida, RedirecionarInicio, SoDeslogada, SoTrocaDeSenha } from './guardas'
-import { PerfilProvisorio } from '@/features/auth/PerfilProvisorio'
 
 const Entrar = lazy(() => import('@/features/auth/Entrar'))
 const TrocarSenha = lazy(() => import('@/features/auth/TrocarSenha'))
@@ -19,6 +18,7 @@ const FichaCliente = lazy(() => import('@/features/clientes/FichaCliente'))
 const Clientes = lazy(() => import('@/features/clientes/Clientes'))
 const Hoje = lazy(() => import('@/features/hoje/Hoje'))
 const Metas = lazy(() => import('@/features/metas/Metas'))
+const Perfil = lazy(() => import('@/features/perfil/Perfil'))
 // Vitrine dos componentes: só existe em desenvolvimento (fica fora do build de produção)
 const VitrineComponentes = import.meta.env.DEV ? lazy(() => import('@/features/dev/VitrineComponentes')) : null
 
@@ -60,7 +60,7 @@ export function Rotas() {
         <Route path="/clientes/:id" element={<FichaCliente />} />
         <Route path="/venda/nova" element={<LancarVenda />} />
         <Route path="/metas" element={<Metas />} />
-        <Route path="/perfil" element={<PerfilProvisorio />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Route>
 
       {/* ADM (dona) */}
