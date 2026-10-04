@@ -93,3 +93,10 @@ export function haDias(data: Date | string | number, agora: Date = new Date()): 
   if (dias === 1) return 'ontem'
   return `há ${dias} dias`
 }
+
+/** Aniversário "6 de outubro" (com ano: "6 de outubro de 1990"). Sem dia/mês: ''. */
+export function formatarAniversario(dia: number | null | undefined, mes: number | null | undefined, ano?: number | null): string {
+  if (!dia || !mes) return ''
+  const base = format(new Date(2000, mes - 1, dia), "d 'de' MMMM", { locale: ptBR })
+  return ano ? `${base} de ${ano}` : base
+}

@@ -1,4 +1,4 @@
-import { dataRelativa, formatarData, formatarDiaMesCurto, formatarMoeda, formatarValor, haDias } from './formatadores'
+import { dataRelativa, formatarAniversario, formatarData, formatarDiaMesCurto, formatarMoeda, formatarValor, haDias } from './formatadores'
 
 const nbsp = ' '
 
@@ -37,4 +37,12 @@ describe('datas (fuso de São Paulo)', () => {
     expect(dataRelativa('2026-10-03T02:30:00Z', agora)).toBe('ontem')
   })
   it('haDias sem limite', () => expect(haDias('2026-08-10T13:00:00Z', agora)).toBe('há 54 dias'))
+})
+
+describe('formatarAniversario', () => {
+  it('dia e mês por extenso', () => {
+    expect(formatarAniversario(6, 10)).toBe('6 de outubro')
+    expect(formatarAniversario(29, 2, 1992)).toBe('29 de fevereiro de 1992')
+    expect(formatarAniversario(null, 3)).toBe('')
+  })
 })
