@@ -22,6 +22,7 @@ export interface RespostasFuncoes {
   'mizloja-nova-senha': AcessoCriado
   'mizloja-alterar-situacao': { ok: true; afetadas: number }
   'mizloja-criar-admin': AcessoCriado & { admin_id: string }
+  'mizloja-alterar-login': AcessoCriado
 }
 
 export class ErroFuncao extends Error {
