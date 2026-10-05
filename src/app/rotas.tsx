@@ -1,6 +1,5 @@
 import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { PaginaEmConstrucao } from '@/components/shared/PaginaEmConstrucao'
 import { LayoutVendedora } from '@/layouts/LayoutVendedora'
 import { LayoutAdm } from '@/layouts/LayoutAdm'
 import { LayoutAdminMiz } from '@/layouts/LayoutAdminMiz'
@@ -26,12 +25,13 @@ const MetasAdm = lazy(() => import('@/features/metas/MetasAdm'))
 const ClientesAdm = lazy(() => import('@/features/clientes/ClientesAdm'))
 const VendasAdm = lazy(() => import('@/features/vendas/VendasAdm'))
 const VendaDetalhe = lazy(() => import('@/features/vendas/VendaDetalhe'))
+const VisaoGeral = lazy(() => import('@/features/dashboard/VisaoGeral'))
 // Vitrine dos componentes: só existe em desenvolvimento (fica fora do build de produção)
 const VitrineComponentes = import.meta.env.DEV ? lazy(() => import('@/features/dev/VitrineComponentes')) : null
 
 /**
- * Mapa de rotas. As páginas das etapas 3 a 6 já existem como provisórias
- * ("Em construção · Etapa X"); cada etapa troca o elemento pela página real.
+ * Mapa de rotas dos 3 painéis. Ficha, kanban e Lançar venda servem à vendedora (/clientes, /venda/nova)
+ * e à ADM (/adm/clientes, /adm/venda/nova), sem sair do layout de cada uma.
  */
 export function Rotas() {
   return (
@@ -78,7 +78,7 @@ export function Rotas() {
           </Protegida>
         }
       >
-        <Route path="/adm" element={<PaginaEmConstrucao titulo="Visão geral" etapa={6} />} />
+        <Route path="/adm" element={<VisaoGeral />} />
         <Route path="/adm/vendas" element={<VendasAdm />} />
         <Route path="/adm/vendas/:id" element={<VendaDetalhe />} />
         <Route path="/adm/clientes" element={<ClientesAdm />} />
