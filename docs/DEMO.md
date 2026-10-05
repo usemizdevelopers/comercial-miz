@@ -2,7 +2,7 @@
 
 Loja fictícia para mostrar o MIZ Loja e testar as telas com dados realistas. Fica no mesmo banco das lojas reais, isolada por `loja_id` + RLS como qualquer outra loja, e é identificada pelo CNPJ de teste **99.999.999/0001-91**.
 
-> **Situação:** a função `mizloja-seed-demo` está escrita, mas **ainda não foi publicada** nem chamada (este container não acessa o Supabase pela rede). Os dados de `dados.sql` foram validados pelo conector numa transação desfeita no fim (resultados abaixo). Passo a passo para carregar de verdade: [TESTES-PENDENTES.md](TESTES-PENDENTES.md), item 7.
+> **Situação:** a função `mizloja-seed-demo` está escrita, mas **ainda não foi publicada** nem chamada (este container não acessa o Supabase pela rede). Os dados de `dados.sql` foram validados pelo conector numa transação desfeita no fim (resultados abaixo). Passo a passo para carregar de verdade: [TESTES-PENDENTES.md](TESTES-PENDENTES.md), passo 3.
 
 ## O que tem
 

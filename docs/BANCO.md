@@ -39,6 +39,7 @@ erDiagram
   mizloja_clientes ||--o{ mizloja_pulos : "pular hoje"
   mizloja_clientes ||--o{ mizloja_transferencias : historico
   mizloja_vendas ||--o{ mizloja_alteracoes : auditoria
+  mizloja_clientes ||--o{ mizloja_clientes_mesclas : "mesclas"
 ```
 
 ## Tabelas
@@ -110,7 +111,7 @@ Peça ou cor **já usada em venda não se apaga** (chave estrangeira com `on del
 | --- | --- |
 | id, loja_id | |
 | nome, nome_busca | nome_busca = minúsculas sem acento (gatilho) |
-| whatsapp | 55 + DDD + número; único por loja |
+| whatsapp | 55 + DDD + número; único por loja. **Nulo = cliente removida** (anonimizada por `mizloja_excluir_cliente`; check `mizloja_clientes_removida_ck` exige nome "Cliente removida"). Só funções internas gravam nulo |
 | aniv_dia, aniv_mes, aniv_ano | Dia e mês juntos ou nenhum; ano opcional |
 | observacoes | até 500 |
 | origem | loja / lead_miz |
@@ -145,6 +146,9 @@ Peça Miz: exige peça e cor (ativas) da própria peça e o tamanho da **grade c
 ### mizloja_metas e mizloja_metas_vendedoras
 Metas: `loja_id`, `mes` (dia 1; único por loja), `valor_loja`, `status` rascunho/publicada, `publicada_em` (gatilho), `premio_descricao`, `premio_condicao_pct` (100), `premio_extra_descricao`, `premio_extra_pct`, `criado_por`.
 Por vendedora: `meta_id`, `loja_id` (copiado), `usuaria_id`, `valor` (nulo = sem meta individual), `premio_elegivel`; único (meta, usuária).
+
+### mizloja_clientes_mesclas
+Registro das duplicadas mescladas pela ADM: `loja_id`, `cliente_mantida_id`, `removida_id`, `removida` (jsonb com a linha da cliente que saiu), `mantida_antes` (jsonb), `vendas_movidas`, `criado_por`, `created_at`. Só a ADM lê; escrita só por `mizloja_mesclar_clientes`.
 
 ### mizloja_contatos, mizloja_pulos, mizloja_transferencias, mizloja_alteracoes
 - **contatos:** cada toque no WhatsApp (`cliente_id`, `usuaria_id`, `pasta` ou nulo, `created_at`). Atualiza o último contato da cliente e, se ela não comprou e está em novas/sem etapa, passa para `em_conversa`.
@@ -181,6 +185,19 @@ Por vendedora: `meta_id`, `loja_id` (copiado), `usuaria_id`, `valor` (nulo = sem
 | `mizloja_cores_usadas` | p_limite = 40 | cor, usos | Invoker. Cores de outra marca já usadas na loja (agrupadas sem acento), para sugerir ao digitar |
 | `mizloja_ranking_mes` | p_mes = mês atual | posicao, nome, sou_eu | Invoker. **Sem valores.** Vazio se `ranking_visivel` = false. Vendedoras ativas (e a ADM, se for ela) |
 | `mizloja_alterar_meu_nome` | p_nome | text | Definer. Perfil: a usuária logada troca só o próprio nome (2 a 80 letras) |
+| `mizloja_salvar_venda_vendedora` | p_vendedora_id + os mesmos de `mizloja_salvar_venda` | jsonb | Invoker. Lançar venda em nome de uma vendedora (o gatilho de vendas só deixa a ADM escolher outra pessoa). `mizloja_salvar_venda` passou a chamá-la com a usuária logada; cliente nova fica com a vendedora da venda |
+| `mizloja_painel_resumo` | p_inicio, p_fim (datas), p_vendedora_id = null | jsonb `{inicio, fim, anterior_inicio, anterior_fim, atual, anterior}` | **ADM.** Indicadores: faturamento, vendas, ticket_medio, pecas, clientes_novas (1ª compra no período), taxa_recompra (2+ compras ÷ 1+ compra, até o fim do período), clientes_ativas (compraram nos 90 dias até o fim), pct_miz (faturamento de pedidos com Miz ÷ faturamento). Anterior = mesma duração imediatamente antes |
+| `mizloja_painel_series` | p_inicio, p_fim, p_vendedora_id = null | jsonb | **ADM.** `faturamento` por dia (até 62 dias, com zeros) ou por mês; `por_vendedora` (R$ e nº, equipe toda); `pecas_miz` (top 10); `cores` (top 10, todas as marcas, agrupadas sem acento, com hex quando houver); `tamanhos` (PP/P e M/G como tamanhos próprios); `perfil` (tamanho, 3 cores, peça campeã, ticket, intervalo médio, aniversariantes do mês); `saude` (clientes por etapa do kanban) |
+| `mizloja_painel_meta` | p_mes = mês atual | jsonb | **ADM.** Meta da loja (rascunho ou publicada), vendido, falta, dias e R$ por dia; `vendedoras`: meta, vendido, nº, %, falta, prêmio e extra (`a_caminho`/`conquistado`) |
+| `mizloja_painel_vendedora` | p_vendedora_id, p_inicio, p_fim | jsonb | **ADM.** Contatos de WhatsApp, clientes atendidas, peças Miz, cadastradas no período e quantas compraram (conversão) |
+| `mizloja_adm_vendas` | p_inicio, p_fim, p_vendedora_id, p_miz, p_peca_id, p_cor, p_tamanho, p_pagamento, p_excluidas = false, p_limite = 50 (máx. 5000), p_offset = 0 | jsonb `{total_linhas, vendas, faturamento, pecas, linhas}` | **ADM.** Lista de vendas com itens; totais sem as excluídas |
+| `mizloja_mesclar_clientes` | p_manter, p_remover, p_nome, p_whatsapp | jsonb | **ADM, definer.** Move vendas, contatos, pulos e transferências para a mantida, aplica nome e WhatsApp escolhidos, anonimiza a outra (fica vazia) e registra em `mizloja_clientes_mesclas`. **O site apaga a outra em seguida** pela API |
+| `mizloja_excluir_cliente` | p_id | text | **ADM, definer.** Com vendas: anonimiza (nome "Cliente removida", sem WhatsApp, aniversário, observações e recado; etapa sem_interesse) e devolve `anonimizada`. Sem vendas: devolve `pode_apagar` e **o site apaga** pela API |
+| `mizloja_interno.mizloja_exigir_adm` | — | uuid | Loja da ADM ativa logada; senão erro "Só a dona da loja pode ver ou fazer isso." |
+| `mizloja_interno.mizloja_inicio_dia` | data | timestamptz | Início do dia em São Paulo (filtros por período) |
+| `mizloja_interno.mizloja_indicadores` | loja, início, fim, vendedora | jsonb | Interna de `mizloja_painel_resumo` |
+
+**Por que as funções da ADM não apagam linhas:** o conector do Supabase usado no desenvolvimento trava em comandos de apagar. Por isso apagar cliente (sem vendas ou a duplicada já vazia) é feito pelo site, com a permissão de apagar que a ADM já tem pelo RLS.
 
 ### Regras de `mizloja_tarefas_hoje`
 Uma pasta por cliente, prioridade **aniversario > pos_venda > follow_up**. Fora: `sem_interesse` e puladas hoje pela usuária. Vendedora vê as próprias (ou todas, se `visibilidade_vendedora = todas`); ADM vê as próprias.
@@ -193,6 +210,8 @@ Todas as colunas de clientes + `vendedora_nome`, `dias_sem_comprar`, `proximo_an
 - **status:** nova (0 compras) · vip (3+ compras e < dias_sumida) · ativa (< dias_recompra) · esfriando (< dias_sumida) · sumida (≤ dias_inativa) · inativa.
 - **etapa_kanban:** sem_interesse · sem compra: a etapa manual (novas ou em_conversa) quando existe; senão em_conversa se já contatada, ou novas · com compra: comprou (≤ dias_comprou), ativa (< dias_recompra), recompra (< dias_sumida), sumidas.
 - **ultima_compra_valor:** valor da última venda não excluída (cartão do kanban).
+- **tem_peca_miz:** a cliente já comprou peça Miz (filtro da tabela da ADM).
+- **Clientes removidas (WhatsApp nulo) não aparecem na view**, na busca (`mizloja_buscar_clientes`) nem nas pastas (`mizloja_tarefas_hoje`). As vendas delas continuam em todos os números.
 
 A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feito na tela.
 
@@ -210,6 +229,8 @@ A view mostra a base inteira da loja; o filtro "só minhas" da vendedora é feit
 - **Transferências:** a loja lê; escrita só pelas funções.
 - **Mensagens e config:** a loja lê; só ADM altera.
 - **Alterações:** só ADM lê; escrita só por gatilho.
+- **Mesclas de clientes:** só ADM lê; escrita só por `mizloja_mesclar_clientes`.
+- **Funções do painel da ADM** (`mizloja_painel_*`, `mizloja_adm_vendas`, mesclar e excluir) recusam quem não é ADM ativa da loja.
 
 ## Permissões de escrita por coluna
 O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária logada (`authenticated`) pode gravar. Nenhuma tabela permite editar `id`, autoria, datas ou campos calculados pela API; isso só acontece por gatilhos, funções internas e Edge Functions (service role).
@@ -231,7 +252,7 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | mizloja_pulos | cliente_id | — | sim |
 | mizloja_mensagens | — | texto | — |
 | mizloja_config | — | dias_*, visibilidade_vendedora, ranking_visivel | — |
-| mizloja_transferencias, mizloja_alteracoes | — | — | — |
+| mizloja_transferencias, mizloja_alteracoes, mizloja_clientes_mesclas | — | — | — |
 
 `id` em clientes e vendas: o navegador escolhe o id (uuid) da venda e da cliente nova, para a fila sem conexão reenviar sem duplicar (migration `mizloja_painel_vendedora`).
 
@@ -264,10 +285,14 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | 20261004003321 | mizloja_kanban_etapa_manual |
 | 20261004003421 | mizloja_v_clientes_valor_ultima_compra |
 | 20261004004124 | mizloja_alterar_meu_nome |
+| 20261005113733 | mizloja_cliente_removida |
+| 20261005114152 | mizloja_painel_adm |
+| 20261005114221 | mizloja_mesclar_excluir_clientes |
+| 20261005114246 | mizloja_salvar_venda_vendedora |
 | pendente | mizloja_sem_imagens (`supabase/migrations-pendentes/`) |
 
 ## Edge Functions (escrita com service role)
 
-Criar conta no Auth, gerar senha, bloquear login e criar loja + dona acontecem só nas Edge Functions de `supabase/functions` (lista, quem chama e corpo das chamadas no `CLAUDE.md`, seção "Edge Functions"). Elas gravam nas colunas que a tabela acima marca como "Edge Function". Funções temporárias: `mizloja-primeiro-admin` (uso único, versão desligada no repositório) e `mizloja-seed-demo` (Loja Demonstração, `docs/DEMO.md`).
+Criar conta no Auth, gerar senha, bloquear login e criar loja + dona acontecem só nas Edge Functions de `supabase/functions` (lista, quem chama e corpo das chamadas no `CLAUDE.md`, seção "Edge Functions"). Elas gravam nas colunas que a tabela acima marca como "Edge Function". `mizloja-alterar-login` (ADM: vendedora da loja; Admin Miz: a dona) troca WhatsApp, usuário e e-mail técnico juntos e gera senha nova. Funções temporárias: `mizloja-primeiro-admin` (uso único, versão desligada no repositório) e `mizloja-seed-demo` (Loja Demonstração, `docs/DEMO.md`).
 
-Pendente: a migration `mizloja_sem_imagens` (apaga `mizloja_peca_imagens`) está em `supabase/migrations-pendentes/` e ainda não foi aplicada (`docs/TESTES-PENDENTES.md`, item 0). Até lá a tabela continua no banco, sem uso pelo site.
+Pendente: a migration `mizloja_sem_imagens` (apaga `mizloja_peca_imagens`) está em `supabase/migrations-pendentes/` e ainda não foi aplicada (`docs/TESTES-PENDENTES.md`, passo 1). Até lá a tabela continua no banco, sem uso pelo site.

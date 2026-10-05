@@ -1,17 +1,26 @@
-# Testes pendentes (dependem de rede)
+# Roteiro de testes do MIZ Loja (sessão única)
 
-Este container de desenvolvimento não acessa `ldlwdxgjiohuvionihhv.supabase.co` (só o conector do Supabase funciona). Tudo abaixo foi escrito e conferido no código, mas precisa rodar numa sessão com rede liberada para o Supabase. **Rodar na ordem**: cada item usa o anterior.
+Tudo o que não deu para testar no container de desenvolvimento (ele não acessa `ldlwdxgjiohuvionihhv.supabase.co`; só o conector do Supabase funciona). As funções do banco já foram testadas pelo conector, em transações desfeitas. Aqui ficam o login, as telas, as Edge Functions pela rede e o Docker.
 
-Marque `[x]` e anote o resultado ao lado de cada item.
+**Rode na ordem:** cada parte usa a anterior. Marque cada caixa e anote o que for diferente do esperado.
 
-## Preparação (terminal)
+Contas usadas:
+- **Admin Miz:** `5531984810586`, senha provisória gerada no passo 2.
+- **Loja Demonstração:** Mariana Souza (ADM) `5531900001001`, Júlia Lima `5531900001002`, Paula Ribeiro `5531900001003`, senhas geradas no passo 3.
+
+---
+
+## 0. Preparação
+
+- [ ] `.env` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` e `VITE_WHATSAPP_SUPORTE_MIZ`; `npm install`; `npm run check` passando.
+- [ ] Atalhos no terminal:
 
 ```bash
 export SUPABASE_URL=https://ldlwdxgjiohuvionihhv.supabase.co
 export ANON=<anon key do .env>
 export FN=$SUPABASE_URL/functions/v1
 
-# Entra com usuário + senha e devolve o token de acesso (access_token)
+# Entra com usuário + senha e devolve o token de acesso
 token() {
   curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" \
     -H "apikey: $ANON" -H "Content-Type: application/json" \
@@ -26,200 +35,178 @@ fn() {
 
 ---
 
-## 0. Aplicar a migration `mizloja_sem_imagens`
+## 1. Aplicar a migration 3 (`mizloja_sem_imagens`)
 
-Não foi aplicada pelo conector (comando de apagar pede confirmação extra e a chamada expira).
+O conector não aplica `drop table` (pede confirmação e a chamada expira).
 
-1. Supabase → SQL Editor → colar `supabase/migrations-pendentes/mizloja_sem_imagens.sql` (uma linha: `drop table public.mizloja_peca_imagens;`) → Run.
-2. Conferir: `select to_regclass('public.mizloja_peca_imagens');` → **null**. E `select count(*) from information_schema.tables where table_schema='public' and table_name not like 'mizloja_%';` → **28** (o app MIZ intacto).
-3. Mover o arquivo para `supabase/migrations/<AAAAMMDDHHMMSS>_mizloja_sem_imagens.sql` (versão = data/hora da aplicação), regenerar `types/supabase.ts`, tirar a tabela de `docs/BANCO.md` e rodar os advisors.
+- [ ] Supabase → SQL Editor → colar `supabase/migrations-pendentes/mizloja_sem_imagens.sql` (`drop table public.mizloja_peca_imagens;`) → Run.
+- [ ] `select to_regclass('public.mizloja_peca_imagens');` → **null**.
+- [ ] `select count(*) from information_schema.tables where table_schema = 'public' and table_name not like 'mizloja_%';` → **28** (app MIZ intacto).
+- [ ] Mover o arquivo para `supabase/migrations/<AAAAMMDDHHMMSS>_mizloja_sem_imagens.sql`, regenerar `types/supabase.ts`, tirar a tabela de `docs/BANCO.md` e rodar `npm run check`.
 
-**Esperado:** tabela some; nada mais muda; `npm run check` continua passando (o site não usa essa tabela).
+**Esperado:** só a tabela de fotos some; o site continua igual (não usa fotos).
 
-## 1. Criar o Admin Miz (`mizloja-primeiro-admin`, uso único)
+## 2. Criar o Admin Miz (`mizloja-primeiro-admin`, uso único)
 
-O repositório tem só a versão **desligada** (`CODIGO_USO_UNICO = ''` → sempre responde 410). O código de uso único **nunca** vai para o GitHub.
+No repositório só existe a versão **desligada** (`CODIGO_USO_UNICO = ''` → sempre 410). O código **nunca** vai para o GitHub.
 
-1. Gerar um código na hora: `openssl rand -hex 24` (48 caracteres).
-2. Numa **cópia local, fora do git**, de `supabase/functions/mizloja-primeiro-admin/index.ts`, colocar o código em `CODIGO_USO_UNICO`.
-3. Publicar essa cópia com o nome `mizloja-primeiro-admin` e **`verify_jwt = false`** (ainda não existe admin para ter token). Junto vão os arquivos de `_shared/` que ela importa.
-4. Chamar uma vez:
-   ```bash
-   curl -s -X POST "$FN/mizloja-primeiro-admin" -H "apikey: $ANON" \
-     -H "x-mizloja-codigo: <código>" -H "Content-Type: application/json" -d '{}'
-   ```
-5. **Na hora**, publicar de novo a versão desligada do repositório (mesmo nome). Apagar a cópia local.
-6. Conferir: chamar de novo → **410** "Função desligada.".
+- [ ] Gerar um código: `openssl rand -hex 24`.
+- [ ] Numa **cópia local fora do git** de `supabase/functions/mizloja-primeiro-admin/index.ts`, colocar o código em `CODIGO_USO_UNICO`.
+- [ ] Publicar essa cópia com o nome `mizloja-primeiro-admin` e **`verify_jwt = false`**, junto com os arquivos de `_shared/`.
+- [ ] Chamar uma vez:
+  ```bash
+  curl -s -X POST "$FN/mizloja-primeiro-admin" -H "apikey: $ANON" \
+    -H "x-mizloja-codigo: <código>" -H "Content-Type: application/json" -d '{}'
+  ```
+  **Esperado:** `{ "usuario": "5531984810586", "senha": "<provisória>", "admin_id": "…", "vinculos_antigos_removidos": 1 }`. **Guarde a senha.**
+- [ ] Na hora, publicar de novo a versão desligada do repositório (mesmo nome) e apagar a cópia local. Chamar de novo → **410** "Função desligada.".
+- [ ] Conferir no SQL Editor:
+  - `mizloja_admins`: 1 linha ativa, `usuario = 5531984810586`, `precisa_trocar_senha = true`;
+  - a conta `usemizdigital@gmail.com` continua igual no Auth (`select email, raw_user_meta_data from auth.users where email = 'usemizdigital@gmail.com';`) e no app MIZ, e saiu só de `mizloja_admins`;
+  - `select count(*) from public.profiles where id = '<admin_id>';` → **0**.
+- [ ] Entrar no site (`npm run dev`, `http://localhost:5173`) com `5531984810586` + senha provisória.
+  **Esperado:** vai direto para **Crie a sua senha**; menos de 6 letras, confirmação diferente ou senha igual à provisória mostram aviso; ao trocar, cai em `/miz/lojas`.
+- [ ] Sair e entrar com a senha nova → `/miz/lojas`. Senha errada → "Usuário ou senha incorretos" (sem dizer qual dos dois). "Esqueci a senha" → folha com o WhatsApp da Miz.
 
-**Esperado:**
-- resposta `{ "usuario": "5531984810586", "senha": "<provisória>", "admin_id": "…", "vinculos_antigos_removidos": 1 }`;
-- `mizloja_admins` com 1 linha ativa, `usuario = 5531984810586`, `precisa_trocar_senha = true`;
-- a linha antiga sem usuário (conta `usemizdigital@gmail.com`) fora de `mizloja_admins`, **e a conta no Auth intacta**: `select email, raw_user_meta_data from auth.users where email = 'usemizdigital@gmail.com';` igual a antes; o `profile` dela no app MIZ igual a antes;
-- `select count(*) from public.profiles where id = '<admin_id>';` → **0** (o gatilho `mizloja_auth_limpar_profile` apagou o profile que o app MIZ criaria);
-- chamada com código errado → 403; segunda chamada com o código certo (antes de desligar) → 410 "Já existe Admin Miz".
+## 3. Carregar a Loja Demonstração
 
-Guardar a senha provisória: ela vai no relatório para a dona do projeto.
+Detalhes em [DEMO.md](DEMO.md).
 
-## 2. Testes das Edge Functions (permissões)
+- [ ] Publicar `supabase/functions/mizloja-seed-demo` com `verify_jwt = true` (com `_shared/`).
+- [ ] `ADMIN=$(token 5531984810586 '<senha nova>')` e `fn mizloja-seed-demo $ADMIN '{"acao":"carregar"}'`.
+  **Esperado:** as 3 contas com senhas de 10 letras. **Guarde as senhas.**
+- [ ] Rodar `supabase/seed-demo/dados.sql` no SQL Editor e depois `verificar.sql`.
+  **Esperado:** 40 clientes, ~117 vendas, as 7 etapas do kanban, os 6 status, 2 aniversários na semana, 1 transferência e meta publicada de R$ 30.000 (tabela completa em DEMO.md).
+- [ ] Entrar como Júlia e como Mariana: **sem** troca de senha obrigatória.
 
-Preparar uma loja de teste pelo terminal (o item 5 repete pelo painel):
+## 4. Painel Admin Miz
 
-```bash
-ADMIN=$(token 5531984810586 '<senha do admin, já trocada no item 4 ou a provisória>')
-fn mizloja-criar-loja $ADMIN '{"loja":{"nome":"Loja Teste API","cnpj":"11222333000181","cidade":"Belo Horizonte","uf":"MG"},"dona":{"nome":"Dona Teste","whatsapp":"31911110001"}}'
-# guarde loja_id e a senha da dona
-DONA=$(token 5531911110001 '<senha>')
-fn mizloja-criar-usuaria $DONA '{"nome":"Vendedora Teste","whatsapp":"31911110002"}'
-VEND=$(token 5531911110002 '<senha>')
-```
+### 4.1 Lojas
+- [ ] `/miz/lojas` → **+ Loja** com CNPJ válido (ex.: `11.444.777/0001-61`), cidade, UF e dona.
+  **Esperado:** "Acesso criado" com usuário e senha uma vez, **Enviar pelo WhatsApp** (mensagem com `APP_URL/entrar`) e **Copiar**.
+- [ ] CNPJ inválido → "Confira o CNPJ."; CNPJ repetido → "Já existe uma loja com esse CNPJ."; WhatsApp já em uso → "Esse WhatsApp já tem acesso ao MIZ Loja.".
+- [ ] Na loja: editar nome/cidade; **Gerar nova senha** da dona (aparece uma vez; a dona volta a ter troca obrigatória).
+- [ ] **Desativar a loja** → a dona logada perde o acesso; **Reativar** → volta.
+- [ ] Busca por nome, cidade e CNPJ (com e sem acento e pontuação).
 
-| # | Teste | Comando | Esperado |
-| --- | --- | --- | --- |
-| 2.1 | Sem token | `curl -s -w '%{http_code}' -X POST "$FN/mizloja-criar-usuaria" -H "apikey: $ANON" -d '{}'` | **401** (o próprio gateway recusa: `verify_jwt = true`) |
-| 2.2 | Vendedora criando usuária em outra loja | `fn mizloja-criar-usuaria $VEND '{"loja_id":"<id de outra loja>","perfil":"vendedora","nome":"X","whatsapp":"31911110009"}'` | **403** "Só a dona da loja pode criar acessos." e nenhuma conta criada |
-| 2.3 | ADM criando ADM | `fn mizloja-criar-usuaria $DONA '{"perfil":"adm","nome":"Outra Dona","whatsapp":"31911110008"}'` | **403** "A dona da loja cria só vendedoras." |
-| 2.4 | Desativar com sessão aberta | 1) `fn mizloja-alterar-situacao $DONA '{"tipo":"usuaria","id":"<id da vendedora>","situacao":"inativa"}'` → 200; 2) com o **mesmo** `$VEND`: `curl -s "$SUPABASE_URL/rest/v1/mizloja_clientes?select=id" -H "apikey: $ANON" -H "Authorization: Bearer $VEND"`; 3) `token 5531911110002 '<senha>'`; 4) renovar a sessão com o refresh token dela | 2) **`[]`** (RLS: `mizloja_minha_loja()` nulo); 3) login recusado (**null**, "User is banned"); 4) renovação recusada. No site: a vendedora logada cai na tela de entrada com o aviso de acesso desativado em até 60 s ou ao voltar para a aba |
+### 4.2 Catálogo
+- [ ] **+ Peça** com 2 cores e 3 tamanhos (ex.: P, M, G) → aparece com as bolinhas e "P · M · G".
+- [ ] Desativar uma cor → some do Lançar venda, continua nas vendas antigas.
+- [ ] Apagar peça já vendida (uma da demonstração) → "Essa peça já foi vendida. Desative em vez de apagar."; peça nunca vendida → apaga.
 
-Extra (mesma lógica): desativar a **loja** pelo Admin Miz → dona e vendedora perdem o acesso; reativar → voltam (a reativação de usuária desbloqueia o login).
+### 4.3 Admins
+- [ ] **+ Admin** → acesso criado; nova senha; desativar e reativar outro admin (o próprio não aparece para desativar).
 
-## 3. Buscas da service role
+### 4.4 Permissões das Edge Functions (terminal)
+Use a loja criada em 4.1: `DONA=$(token <whatsapp da dona> '<senha>')`, crie uma vendedora com `fn mizloja-criar-usuaria $DONA '{"nome":"Vendedora Teste","whatsapp":"31911110002"}'` e `VEND=$(token 5531911110002 '<senha>')`.
 
-Já feitas neste container em 03/10/2026 (código, `dist` e histórico). Repetir depois do merge, na `main`:
+- [ ] Sem token: `curl -s -w '%{http_code}' -X POST "$FN/mizloja-criar-usuaria" -H "apikey: $ANON" -d '{}'` → **401**.
+- [ ] Vendedora criando acesso: `fn mizloja-criar-usuaria $VEND '{"nome":"X","whatsapp":"31911110009"}'` → **403**, nada criado.
+- [ ] ADM criando ADM: `fn mizloja-criar-usuaria $DONA '{"perfil":"adm","nome":"Outra","whatsapp":"31911110008"}'` → **403** "A dona da loja cria só vendedoras.".
+- [ ] ADM trocando login de vendedora de **outra** loja: `fn mizloja-alterar-login $DONA '{"usuario_id":"<id da Júlia da demonstração>","whatsapp":"31911110007"}'` → **403**.
+- [ ] Desativar com sessão aberta: `fn mizloja-alterar-situacao $DONA '{"tipo":"usuaria","id":"<id da vendedora>","situacao":"inativa"}'` → 200; com o mesmo `$VEND`, `curl -s "$SUPABASE_URL/rest/v1/mizloja_clientes?select=id" -H "apikey: $ANON" -H "Authorization: Bearer $VEND"` → **`[]`**; `token 5531911110002 '<senha>'` → **null** (bloqueada).
+- [ ] Funções da ADM com token de vendedora: `curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/mizloja_painel_resumo" -H "apikey: $ANON" -H "Authorization: Bearer <token da Júlia>" -H "Content-Type: application/json" -d '{"p_inicio":"2026-10-01","p_fim":"2026-10-31"}'` → erro "Só a dona da loja pode ver ou fazer isso.".
 
+### 4.5 Buscas da service role (na `main`, depois do merge)
 ```bash
 grep -rnE "service_role|SERVICE_ROLE" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git .
 npm run build && grep -rlE "service_role|SERVICE_ROLE" dist || echo "dist limpo"
-git log --all -p | grep -nE "^\+.*(service_role|SERVICE_ROLE)"
-git log --all -p | grep -c "eyJhbGciOi"   # chaves JWT coladas no código
+git log --all -p | grep -c "eyJhbGciOi"
 ```
+- [ ] **Esperado:** só `Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')` em `supabase/functions/_shared/supabase.ts` e os `grant … to service_role` das migrations; `dist` limpo; **0** chaves JWT.
 
-**Esperado:** no código e no histórico, só `Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')` em `supabase/functions/_shared/supabase.ts` e os `grant … to service_role` das migrations; `dist` limpo; **0** chaves JWT. No site publicado, abrir o DevTools → Sources e procurar `service_role`: nada.
+## 5. Vendedora (Prompt 3) — entrar como Júlia
 
-## 4. Login e troca de senha
+### 5.1 Hoje (`/hoje`)
+- [ ] Saudação com o primeiro nome e a data por extenso; faixa da meta com barra, "Vendido · Faltam" e "Faltam R$ X para o seu prêmio" (meta da Júlia: R$ 12.000). Tocar na faixa → `/metas`.
+- [ ] Pastas Follow-up · Pós-venda · Aniversário com contadores; a primeira com gente já vem aberta; pasta com 0 apagada e sem toque.
+- [ ] Aniversário → **WhatsApp** abre o wa.me com "Feliz aniversário, [primeiro nome]! …"; o cartão some na hora. Pós-venda → mensagem de pós-venda. Follow-up → conversa em branco.
+- [ ] **Pular hoje** (botão ou deslizar o cartão) → some, com **Desfazer**. Recarregar: quem foi contatada ou pulada não volta.
+- [ ] "Minhas vendas de hoje" com total e até 3 vendas (depois do 5.2). Trocar de aba e voltar: atualiza.
 
-1. `npm run dev`, abrir `http://localhost:5173`.
-2. Entrar com `5531984810586` (ou `(31) 98481-0586`) + senha provisória.
-   **Esperado:** vai direto para **Trocar senha** (não deixa abrir outra página, nem digitando a URL).
-3. Testar erros: senha com menos de 6 → aviso; confirmação diferente → aviso; senha igual à provisória → "A nova senha precisa ser diferente da senha provisória."
-4. Trocar a senha. **Esperado:** cai em `/miz/lojas`; `precisa_trocar_senha = false` e `ultimo_acesso_em` preenchido em `mizloja_admins`.
-5. Sair e entrar com a senha nova → `/miz/lojas`. Senha errada → "Usuário ou senha incorretos" (sem dizer qual dos dois).
-6. "Esqueci a senha" → folha com o botão do WhatsApp da Miz (número provisório por enquanto).
-7. Repetir com a dona e a vendedora do item 2: dona vai para `/adm`, vendedora para `/hoje`; a dona, na troca de senha, também informa o e-mail.
+### 5.2 Lançar venda (`+ Venda`)
+- [ ] **Cliente antiga com 1 peça Miz em até 20 s:** Já é cliente → "ana" → Ana Paula Ribeiro → Sim → peça → cor → tamanho → Adicionar → Continuar → valor → PIX → Salvar.
+  **Esperado:** cartão fixo com compras, tamanho e 2 cores; só cores ativas e a grade da peça (inclusive PP/P e M/G); sucesso "Venda de R$ X salva · faltam R$ Y para sua meta".
+- [ ] Busca sem acento e por dígitos acha clientes de todas as vendedoras. Cliente da Paula → aviso "Cliente da Paula Ribeiro. Ao salvar a venda, ela passa a ser sua."; depois, a ficha mostra Júlia como responsável.
+- [ ] Cliente nova (com aniversário) → vai para **Comprou** no kanban. WhatsApp já existente → "Esse número já é da [nome]. Usar ela?".
+- [ ] Não sei + nome inexistente → "Não encontramos…" → **Cadastrar agora** com o nome preenchido (números → WhatsApp preenchido).
+- [ ] Outra marca: cor livre com sugestões, PP a GG + Único. Lixeira remove. Botões ficam cinza sem item, valor ou pagamento.
+- [ ] Voltar não apaga nada; Outra data até 7 dias; venda de 3 dias atrás não entra em "Minhas vendas de hoje".
+- [ ] Rascunho: fechar a aba no meio → "Continuar a venda da [nome]?".
+- [ ] **Sem conexão** (DevTools → Network → Offline): salvar → "Venda … guardada" e a faixa "1 venda aguardando envio"; voltar Online → "Venda enviada"; no banco, **uma** venda só.
 
-## 5. Loja de teste pelo painel
+### 5.3 Ficha, Clientes, Metas e Perfil
+- [ ] Ficha: 4 números, preferências, histórico expansível, contatos e transferências, observações salvas ao sair do campo; Alice Nogueira com o **recado** no topo.
+- [ ] Venda própria com menos de 24 h: **Editar valor e pagamento** e **Excluir** com motivo; venda antiga ou de outra pessoa: sem esses botões.
+- [ ] Editar (WhatsApp de outra cliente → aviso) e Transferir para a Paula com recado (entrando como Paula: Follow-up "Transferida pela Júlia").
+- [ ] Kanban no celular: abas com contador; **Mover** (ou pressionar o cartão) entre Novas, Em conversa e Sem interesse; filtro Sem interesse; busca; filtros VIP, Aniversário e Nova. Com `visibilidade_vendedora = 'proprias'` não aparece Minhas/Todas.
+- [ ] Metas: "Faltam R$ X", barra, dias e R$ por dia, prêmio e prêmio extra; histórico de 6 meses; ranking só com `ranking_visivel` (sem valores das colegas).
+- [ ] Perfil: trocar o nome, trocar a senha, Sair.
 
-1. `/miz/lojas` → **+ Loja**: nome, CNPJ válido (ex.: `11.444.777/0001-61`), cidade, UF, dona (nome + WhatsApp).
-   **Esperado:** tela "Acesso criado" com usuário e senha, botões **Enviar pelo WhatsApp** (mensagem com o link `APP_URL/entrar`) e **Copiar**; a senha não aparece de novo depois de fechar.
-2. CNPJ inválido → "Confira o CNPJ."; CNPJ repetido → "Já existe uma loja com esse CNPJ."; WhatsApp já em uso → "Esse WhatsApp já tem acesso ao MIZ Loja.", nada criado.
-3. Abrir a loja: editar nome/cidade (salva), **Gerar nova senha** da dona (nova senha uma vez; a dona volta a ter troca obrigatória).
-4. **Desativar a loja** → confirmação → dona logada perde o acesso; na lista, selo "Inativa". **Reativar** → volta.
-5. Busca da lista por nome, cidade e CNPJ (com e sem acento/pontuação).
+## 6. ADM (Prompt 4) — entrar como Mariana
 
-## 6. Catálogo
+### 6.1 Visão geral (`/adm`)
+- [ ] Filtros Hoje · 7 dias · Este mês · Mês passado · Escolher datas e vendedora; todos os blocos mudam juntos e o filtro fica na URL.
+- [ ] 8 indicadores (faturamento, vendas, ticket, peças, clientes novas, taxa de recompra, clientes ativas 90 dias, % Miz), cada um com "+X% vs. período anterior" (ou p.p. nos percentuais), sem seta colorida.
+- [ ] Meta do mês: barra da loja (vendido, meta, falta, R$ por dia) e uma linha por vendedora, com selo quando o prêmio for conquistado.
+- [ ] Gráficos: faturamento por dia (até 62 dias; mais que isso, por mês), vendas por vendedora (tocar filtra o painel), peças Miz, cores (com bolinha) e tamanhos. Nenhuma pizza; cores só da paleta.
+- [ ] Perfil da cliente (tamanho, 3 cores, peça campeã, ticket, intervalo, aniversariantes do mês → abre Clientes filtrada).
+- [ ] Saúde da base: tocar numa etapa → Clientes filtrada por ela.
+- [ ] Loja sem vendas (a loja do 4.1): estado vazio com **Lançar venda** e **Equipe**.
 
-1. `/miz/catalogo` → **+ Peça**: referência, nome, categoria, preço, **2 cores** (nome + hex) e **3 tamanhos** (ex.: P, M, G).
-   **Esperado:** peça aparece na lista com as bolinhas das 2 cores e "P · M · G".
-2. Editar: **desativar uma cor** → salva; a cor some das opções de venda nova (Lançar venda, etapa 4), mas continua nas vendas antigas.
-3. Tentar apagar uma peça **já vendida** (ex.: uma usada pela Loja Demonstração depois do item 7) → aviso "Essa peça já foi vendida. Desative em vez de apagar." (o mesmo vale para apagar uma cor já vendida); peça nunca vendida → apaga.
-4. Busca por nome e referência; filtro Ativas / Inativas / Todas.
+### 6.2 Equipe (`/adm/equipe`)
+- [ ] Lista com vendido no mês, % da meta, nº de vendas e último acesso.
+- [ ] **+ Vendedora** → "Acesso criado" com Enviar pelo WhatsApp e Copiar; aviso de que a senha não aparece de novo.
+- [ ] Página da vendedora: filtros de período; números (faturamento, vendas, ticket, clientes novas, peças Miz, atendidas, contatos de WhatsApp, conversão); meta do mês e histórico; últimas vendas; clientes dela em Hora da recompra e Sumidas.
+- [ ] Editar nome; **Trocar WhatsApp** → nova mensagem de acesso; entrar com o número novo e a senha nova (troca obrigatória); o número antigo não entra mais.
+- [ ] **Gerar nova senha** → acesso mostrado uma vez.
+- [ ] **Desativar** exige escolher para quem vão as clientes → ela perde o acesso e as clientes passam (histórico de transferências com motivo desativação). **Reativar** → volta a entrar.
 
-## 7. Loja Demonstração
+### 6.3 Configurações (`/adm/config`)
+- [ ] Loja: nome, cidade, UF e WhatsApp salvam (toast) e o nome aparece na barra lateral.
+- [ ] Mensagens: contador até 300, prévia ao vivo com "Ana Paula Ribeiro", **Restaurar texto padrão**; depois de salvar, o WhatsApp de Aniversário/Pós-venda em Hoje usa o texto novo.
+- [ ] Prazos: ordem errada (ex.: Sumidas menor que Hora da recompra) → aviso e botão desativado; salvar → kanban e pastas mudam.
+- [ ] Equipe: visibilidade (Júlia passa a ver Minhas/Todas) e ranking (aparece em Metas da vendedora).
+- [ ] Conta: e-mail de recuperação e troca de senha.
 
-Seguir [DEMO.md](DEMO.md): publicar `mizloja-seed-demo` (`verify_jwt = true`), chamar `{"acao":"carregar"}` com o token do Admin Miz, rodar `supabase/seed-demo/dados.sql` e depois `verificar.sql`.
+### 6.4 Metas e prêmios (`/adm/metas`)
+- [ ] Mês atual em destaque, setas de mês; referência "Mês passado · melhor mês".
+- [ ] Meta da loja, **Dividir igualmente**, soma com aviso de diferença (não bloqueia), prêmio para todas ou escolhidas, condição %, prêmio extra.
+- [ ] **Salvar rascunho** → a Júlia não vê; **Publicar** → a Júlia vê em Metas e na faixa de Hoje.
+- [ ] Mês seguinte vazio: **Repetir o mês passado** preenche tudo.
+- [ ] Acompanhamento (meta, vendido, %, falta, prêmio a caminho/conquistado) e meses anteriores só leitura.
 
-**Esperado:**
-- a resposta traz as 3 contas (Mariana Souza ADM `5531900001001`, Júlia Lima `5531900001002`, Paula Ribeiro `5531900001003`) com senhas de 10 caracteres — **guardar para o relatório**;
-- `verificar.sql` igual à tabela de [DEMO.md](DEMO.md) (40 clientes, ~117 vendas, kanban com as 7 etapas, 6 status, 2 aniversários na semana, 1 transferência, meta publicada de R$ 30000);
-- entrar como Júlia e como Mariana: sem troca de senha obrigatória;
-- outra loja (a do item 5) **não vê nada** da demonstração.
+### 6.5 Clientes (`/adm/clientes`)
+- [ ] Tabela com contador; ordenar por cada coluna; páginas de 50.
+- [ ] Filtros combinados (status, etapa, vendedora, aniversariantes do mês/7 dias, tamanho, cor, comprou Miz, sem comprar há mais de X dias, faixa de total gasto) e **Limpar filtros**.
+- [ ] **Exportar** → CSV abre no Excel com acentos certos, separado por ";", com os filtros aplicados.
+- [ ] Alternar para **Kanban** (todas as clientes) e voltar.
+- [ ] Lote: selecionar 3 → **Trocar responsável** e **Mover para Sem interesse**.
+- [ ] Ficha pela ADM: **Trocar responsável**; **Mesclar duplicada** (cadastre antes uma "Ana Paula R." com outro número; escolha nome e WhatsApp que ficam → as compras somam e a outra some); **Excluir**: cliente sem vendas some; cliente com vendas vira "Cliente removida", sai da busca, do kanban e das pastas, e as vendas continuam no faturamento.
 
-Depois de mostrar: `{"acao":"remover"}` e remover a função (ou deixar enquanto a demonstração for útil).
+### 6.6 Vendas (`/adm/vendas`)
+- [ ] Lista com data, cliente, vendedora, itens, selo Miz, valor e pagamento; totais no rodapé (vendas, peças, faturamento).
+- [ ] Filtros: período, vendedora, com/sem Miz, peça, cor, tamanho, pagamento, mostrar excluídas (excluídas aparecem mas não somam). **Exportar** CSV.
+- [ ] Detalhe: editar valor, pagamento, data (qualquer data passada) e vendedora; adicionar peça (Miz ou outra marca), mudar quantidade, remover (a última não sai); excluir com motivo e **Restaurar**.
+- [ ] Registro de alterações com quem, quando e "antes → depois".
+- [ ] **+ Venda** da ADM: no passo 3 aparece **Vendedora** (padrão: ela mesma); escolher a Júlia → a venda conta na meta da Júlia e o sucesso volta para a Visão geral.
+- [ ] **Modo vendedora** (Mais → Modo vendedora): o campo Vendedora some e a venda conta para a Mariana.
+
+## 7. Celular e computador
+
+- [ ] Celular (aparelho real ou DevTools 390 px): rodapé da vendedora (Hoje · Clientes · + Venda · Metas · Perfil) e da ADM (Visão geral · Vendas · + Venda · Clientes · Mais); "Salvar venda" preso acima do rodapé; folhas sobem de baixo; nada corta na horizontal; tabelas viram cartões (Clientes e Vendas da ADM).
+- [ ] Computador (≥ 1200 px): barra lateral; tabela de Clientes e Vendas; kanban com 6 colunas e arrastar entre Novas e Em conversa; gráficos 2 por linha; folhas abrem como janela ou painel lateral.
+- [ ] iPhone: campos não dão zoom ao tocar; área segura no rodapé.
 
 ## 8. Docker local
 
-A imagem já foi construída e testada neste container (sem login real): build OK com Node 22, rotas da SPA → 200, `/saude` → `ok`, `HEALTHCHECK` saudável, `/assets` com cache de 1 ano e gzip, `index.html` sem cache, arquivo inexistente em `/assets` → 404, sem `service_role` e sem a vitrine no site da imagem.
+Já testado no container sem login: build com Node 22, rotas 200, `/saude` → `ok`, cache de 1 ano em `/assets`, `index.html` sem cache, sem `service_role` e sem a vitrine.
 
-Falta, com rede:
-1. Construir e rodar como em [DEPLOY-EASYPANEL.md](DEPLOY-EASYPANEL.md) → "Testar a imagem no computador".
-2. Incluir `http://localhost:8080` em `ALLOWED_ORIGINS` (Edge Functions → Secrets).
-3. Abrir `http://localhost:8080`, entrar como Admin Miz, criar uma loja (Edge Function pelo navegador = CORS OK), recarregar a página em `/miz/lojas/<id>` (não pode dar 404).
-
-**Esperado:** tudo igual ao `npm run dev`. Depois, tirar `localhost:8080` de `ALLOWED_ORIGINS`.
+- [ ] Construir e rodar como em [DEPLOY-EASYPANEL.md](DEPLOY-EASYPANEL.md) → "Testar a imagem no computador".
+- [ ] Incluir `http://localhost:8080` em `ALLOWED_ORIGINS` (Edge Functions → Secrets).
+- [ ] Entrar como Mariana em `http://localhost:8080`, criar uma vendedora (Edge Function pelo navegador = CORS ok) e recarregar em `/adm/clientes` (sem 404).
+- [ ] Tirar `localhost:8080` de `ALLOWED_ORIGINS` no fim.
 
 ---
 
-# Prompt 3 · Painel da vendedora
-
-Pré-requisitos: itens 1, 4 e 7 acima (Admin Miz criado e **Loja Demonstração carregada**). Entrar no celular (ou no DevTools em modo celular, 390 px) como **Júlia Lima** (`5531900001002`) e, no fim, repetir o essencial no computador (≥ 1200 px). As funções do banco já foram testadas pelo conector (transações desfeitas); aqui é o teste das telas.
-
-## P3.1 Hoje (`/hoje`, abre sozinha depois do login)
-1. **Esperado:** "Bom dia/Boa tarde/Boa noite, Júlia" + data por extenso; faixa da meta com barra, "Vendido R$ X · Faltam R$ Y" e "Faltam R$ Z para o seu prêmio" (meta da demonstração: R$ 12.000, prêmio a 100%).
-2. Tocar na faixa → abre `/metas`. Voltar.
-3. Pastas Follow-up · Pós-venda · Aniversário com contadores (demonstração: ~11 · 1 · 1). A primeira pasta com gente já vem aberta. Tocar em outra pasta troca a lista. Pasta com 0 aparece apagada e não abre.
-4. Cartão: nome, motivo ("Transferida pela Paula", "Nova, ainda sem conversa", "40 dias sem comprar"…) e última compra.
-5. **Aniversário → WhatsApp:** abre o wa.me com "Feliz aniversário, [primeiro nome]! … [Loja Demonstração]…". O cartão some na hora; o contador cai 1. Na ficha dela, a linha do tempo mostra "WhatsApp aberto por Júlia (Aniversário)".
-6. **Pós-venda → WhatsApp:** mesma coisa com a mensagem de pós-venda. **Follow-up → WhatsApp:** abre a conversa sem texto.
-7. **Pular hoje** (botão): o cartão some, aviso "… pulada até amanhã" com **Desfazer** → desfazer traz o cartão de volta. **Deslizar** um cartão para o lado (celular) faz o mesmo.
-8. Recarregar a página: quem foi contatada ou pulada não volta.
-9. "Minhas vendas de hoje": total e até 3 vendas (depois do P3.2). Tocar numa venda abre a ficha da cliente.
-10. Trocar de aba do navegador e voltar: a tela atualiza sozinha.
-11. Estado vazio (opcional: entrar com uma vendedora sem clientes): "Ninguém para chamar agora…" com o link **Ver Hora da recompra** → `/clientes?coluna=recompra`.
-
-## P3.2 Lançar venda (`+ Venda` no rodapé)
-1. **Cliente antiga, 1 peça Miz (meta: até 20 s e 8 toques):** Já é cliente → digitar "ana" → tocar em Ana Paula Ribeiro → Sim → tocar numa peça → cor → tamanho → Adicionar peça → Continuar → valor → PIX → Salvar venda.
-   **Esperado:** cartão fixo no topo (nome, nº de compras, tamanho e 2 cores com bolinha); só cores **ativas** da peça e a grade dela (inclusive PP/P ou M/G); tela de sucesso "Venda de R$ X salva · faltam R$ Y para sua meta" com Abrir WhatsApp, Nova venda e Ir para Hoje.
-2. Busca: a partir de 2 letras, sem acento ("julia" acha "Júlia"), por dígitos do WhatsApp, e acha clientes **de todas as vendedoras** (resultado mostra a vendedora).
-3. **Cliente de outra vendedora:** escolher uma cliente da Paula → aviso "Cliente da Paula Ribeiro. Ao salvar a venda, ela passa a ser sua." Depois de salvar, a ficha mostra Júlia como responsável e a linha do tempo "Passou para Júlia pela venda".
-4. **Cliente nova:** Cliente nova → nome, WhatsApp e aniversário (dia/mês) → Continuar → … → Salvar. Ela aparece no kanban em **Comprou**.
-5. **Duplicidade:** Cliente nova com o WhatsApp de uma cliente existente → ao sair do campo: "Esse número já é da [nome]. Usar ela?" → **Usar** leva para o passo 2 com ela; **Corrigir número** limpa o campo.
-6. **Não sei** com um nome que não existe ("Fernanda Teste") → "Não encontramos…" → **Cadastrar agora** abre o cadastro com o nome preenchido; com números ("98765") preenche o WhatsApp.
-7. **Outra marca:** Não → cor livre (as cores já usadas aparecem como sugestão), tamanho PP a GG + Único, quantidade. Com peça Miz, o link "Tem peça de outra marca também?" abre o mesmo bloco. Lixeira remove a linha.
-8. **Botões desativados:** Continuar (passo 2) sem item e Salvar venda sem valor ou sem pagamento ficam cinza, sem mensagem vermelha.
-9. **Voltar** em qualquer passo e avançar de novo: nada do que foi preenchido se perde. "Trocar" no cartão volta ao passo 1.
-10. **Data:** Outra data → lista de ontem até 7 dias atrás. Salvar com 3 dias atrás → a venda aparece na ficha com essa data e **não** entra em "Minhas vendas de hoje".
-11. **Rascunho:** começar uma venda (cliente + 1 peça), fechar a aba, abrir de novo `+ Venda` → "Continuar a venda da [nome]?" → Continuar restaura tudo; Começar outra limpa.
-12. **Sem conexão:** DevTools → Network → Offline. Lançar uma venda → tela "Venda de R$ X guardada" e, no topo das páginas, "1 venda aguardando envio". Voltar para Online → em segundos aparece "Venda enviada" e a faixa some. Conferir no banco que existe **uma** venda só (sem duplicar) — repetir com Offline → Online várias vezes.
-13. **Erro do banco na fila (opcional):** com Offline, lançar venda com uma peça; pelo Admin Miz desativar a cor dessa peça; voltar Online → a faixa mostra "Venda da [nome] … não foi aceita: [motivo]" com **Descartar**.
-14. **Nova venda pela ficha:** na ficha de uma cliente → Nova venda → abre direto no passo 2 com ela no cartão.
-15. Sucesso → **Abrir WhatsApp da cliente** abre a conversa sem texto e registra contato sem pasta (linha do tempo da ficha).
-
-## P3.3 Ficha da cliente (`/clientes/:id`)
-1. Cabeçalho: selo de status, aniversário ("6 de outubro"), responsável; botões WhatsApp, Nova venda, Transferir (só nas clientes dela; a ADM vê sempre) e Editar.
-2. Alice Nogueira (demonstração): **recado da transferência** em destaque no topo.
-3. 4 números: compras, total gasto, ticket médio, "compra a cada X dias" (só a partir de 2 compras) e "Última compra há N dias".
-4. Preferências: tamanho, 3 cores com bolinha, peças Miz com quantas vezes.
-5. Histórico: da mais recente para a mais antiga; tocar expande os itens.
-6. **Venda própria com menos de 24 h** (a do P3.2): **Editar valor e pagamento** → salva e os números da ficha/meta mudam; **Excluir** exige motivo → a venda some do histórico, da meta e de "Minhas vendas de hoje". Venda de outra pessoa ou com mais de 24 h: sem esses botões.
-7. Linha do tempo: "WhatsApp aberto por Júlia · data", transferências com recado.
-8. Observações: escrever e sair do campo → "Observação salva"; recarregar mantém.
-9. **Editar:** nome, WhatsApp (número de outra cliente → "Esse número já é da …"), aniversário, etapa (sem compra: Novas / Em conversa / Sem interesse; com compra: Automática / Sem interesse).
-10. **Transferir:** escolher Paula + recado → aviso "… agora é da Paula"; entrando como Paula, a cliente aparece no Follow-up com "Transferida pela Júlia" e o recado no topo da ficha.
-
-## P3.4 Clientes · kanban (`/clientes`)
-1. Celular: abas roláveis com contador (Novas, Em conversa, Comprou, Ativa, Hora da recompra, Sumidas); uma coluna por vez.
-2. Cartão: nome, selo (VIP / Aniversário / Nova…), "Última compra há N dias · R$ X", WhatsApp. Tocar abre a ficha.
-3. **Pressionar e segurar** um cartão (ou o botão **Mover**) → "Mover [nome]" com as opções e a explicação das colunas automáticas. Mover de Em conversa para Novas funciona (mesmo já contatada) e o contador muda na hora.
-4. Cliente com compra: Mover só oferece **Sem interesse**; em Sem interesse, **Voltar para o quadro**.
-5. Filtro **Sem interesse** mostra só as arquivadas (demonstração: 2); elas não aparecem em Hoje.
-6. Busca por nome (sem acento) ou dígitos; filtros VIP, Aniversário (próximos 7 dias) e Nova.
-7. **Minhas / Todas:** com `visibilidade_vendedora = 'proprias'` (padrão) o controle não aparece e só vêm as dela; mudar no banco para `'todas'` (`update mizloja_config set visibilidade_vendedora = 'todas' where loja_id = …`) → o controle aparece e "Todas" mostra as da Paula também.
-8. Computador (≥ 1200 px): 6 colunas lado a lado; **arrastar** um cartão entre Novas e Em conversa move de verdade; colunas automáticas não aceitam soltar.
-9. Coluna com mais de 50 cartões: botão "Mostrar mais (N)".
-
-## P3.5 Metas (`/metas`)
-1. **Meta individual com prêmio** (Júlia na demonstração): "FALTAM R$ X" grande, barra "Vendido R$ … de R$ 12.000 · %", "Faltam N dias · R$ Y por dia", cartão do prêmio ("Bateu 100% da meta") e do extra ("Bateu 120% … · faltam R$ Z"). Ao bater (lançar vendas até passar), o cartão muda para "Conquistado", barra cheia com "Meta batida", sem confete.
-2. **Sem prêmio:** no banco, `update mizloja_metas set premio_descricao = null, premio_extra_descricao = null …` → só número, barra e dias.
-3. **Só meta da loja:** apagar o valor individual (`update mizloja_metas_vendedoras set valor = null …`) → "A loja vendeu R$ X de R$ 30.000" e "Você vendeu R$ Y este mês".
-4. **Sem meta:** voltar a meta para `rascunho` → "Vendido no mês R$ X · N vendas".
-5. Em todos: Vendas, Ticket médio e Clientes novas; "Meses anteriores" com 6 meses (vendido, % da meta, Prêmio ganho / Sem prêmio).
-6. **Ranking:** `update mizloja_config set ranking_visivel = true …` → aparece a lista com posição e nomes (a própria com "Você"), **sem valores das colegas**. Com `false`, some.
-
-## P3.6 Perfil (`/perfil`)
-1. Nome editável → "Salvar nome" → "Nome atualizado"; o nome novo aparece na barra lateral e na saudação de Hoje.
-2. WhatsApp, usuário e loja só leitura.
-3. Trocar senha: menos de 6 → aviso; confirmação diferente → aviso; certo → "Senha trocada". Sair e entrar com a senha nova.
-4. **Sair** volta para `/entrar`.
-5. **ADM no modo vendedora:** entrar como Mariana (ADM), ir para o modo vendedora → em Perfil aparece **Voltar ao painel** (leva a `/adm`). As vendas lançadas por ela contam para ela (aparecem em "Minhas vendas de hoje" dela, não da Júlia).
-
-## P3.7 Computador (≥ 1200 px)
-Repetir rapidamente P3.1, P3.2 (1 venda) e P3.4 (arrastar): barra lateral à esquerda, "Salvar venda" preso no pé da tela ao lado da barra lateral, folhas abrindo como janela ou painel lateral.
+Depois deste roteiro: [ANTES-DE-PUBLICAR.md](ANTES-DE-PUBLICAR.md).

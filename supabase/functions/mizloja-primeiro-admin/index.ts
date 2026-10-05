@@ -5,7 +5,7 @@
 // (a conta usemizdigital@gmail.com do app MIZ), SEM alterar nem apagar essa conta no Auth.
 //
 // ESTA É A VERSÃO DESLIGADA: com CODIGO_USO_UNICO vazio, a função sempre responde 410.
-// Para usar (só na sessão de testes, ver docs/TESTES-PENDENTES.md, item 1):
+// Para usar (só na sessão de testes, ver docs/TESTES-PENDENTES.md, passo 2):
 //   1. gerar um código aleatório na hora e colocá-lo em CODIGO_USO_UNICO SÓ na cópia publicada
 //      (nunca commitar o código);
 //   2. publicar com verify_jwt = false (ainda não existe nenhum admin para ter token);

@@ -15,7 +15,7 @@ Documentos de referência:
 - `docs/BANCO.md` — banco de dados completo (tabelas, funções, RLS, diagrama).
 
 ## Etapas
-1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · Painel da vendedora (Lançar venda, Ficha, Clientes, Hoje, Metas, Perfil) ✅ no Prompt 3 (testes no site: `docs/TESTES-PENDENTES.md`, seção Prompt 3) · Próximo (Prompt 4): painel da ADM — Equipe, Configurações, Clientes, Metas e prêmios, Vendas e Visão geral (rotas `/adm/*` ainda provisórias) · depois: revisão final.
+1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · Painel da vendedora (Lançar venda, Ficha, Clientes, Hoje, Metas, Perfil) ✅ no Prompt 3 (testes no site: `docs/TESTES-PENDENTES.md`, passo 5) · Painel da ADM (Visão geral, Equipe, Configurações, Metas e prêmios, Clientes, Vendas) ✅ no Prompt 4 · Próximo: rodar o roteiro `docs/TESTES-PENDENTES.md` e a lista `docs/ANTES-DE-PUBLICAR.md`.
 Pendências e decisões em aberto: `docs/PENDENCIAS.md`.
 
 ## Independência do app MIZ (REGRA ABSOLUTA)
@@ -43,6 +43,8 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 - **ADM (dona) e vendedora:** linhas em `mizloja_usuarias` (id = `auth.users.id`), uma loja por usuária.
 - **Login:** usuário (WhatsApp só com dígitos, ex.: `5531999998888`) + senha. No Auth, e-mail técnico `<usuario>@mizloja.usemiz.app` (nunca recebe e-mail) e `raw_user_meta_data.app = 'mizloja'`. Contas criadas por Edge Function com service role (etapa 2). Primeiro acesso: `precisa_trocar_senha = true`.
 - Usuária inativa ou loja inativa perde todo o acesso imediatamente (`mizloja_minha_loja()` devolve nulo).
+- **Cliente removida** = WhatsApp nulo (anonimizada pela ADM); some da view, da busca e das pastas, e as vendas continuam nos números.
+- **O conector do Supabase trava em `delete`/`drop`** (até dentro de corpo de função). Funções do banco não apagam linhas: quando precisa apagar, o site apaga pela API com a permissão do RLS. `drop` fica para o SQL Editor, feito pela dona do projeto.
 
 ## Funções do banco
 | Função | Para que serve |
@@ -69,7 +71,15 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 | `mizloja_cores_usadas(limite)` | Sugestões de cor para peça de outra marca |
 | `mizloja_ranking_mes(mes)` | Posição e nomes da equipe (sem valores), só com `ranking_visivel` |
 | `mizloja_alterar_meu_nome(nome)` | Perfil: a usuária troca o próprio nome |
-| view `mizloja_v_clientes` | Clientes + status + etapa do kanban + aniversário + valor da última compra |
+| `mizloja_salvar_venda_vendedora(vendedora, …)` | Lançar venda em nome de uma vendedora (só ADM escolhe outra pessoa) |
+| `mizloja_painel_resumo(inicio, fim, vendedora)` | **ADM:** 8 indicadores do período e do período anterior |
+| `mizloja_painel_series(inicio, fim, vendedora)` | **ADM:** faturamento por dia/mês, por vendedora, peças Miz, cores, tamanhos, perfil da cliente e saúde da base |
+| `mizloja_painel_meta(mes)` | **ADM:** meta da loja e, por vendedora, meta, vendido, %, falta e prêmio |
+| `mizloja_painel_vendedora(id, inicio, fim)` | **ADM:** contatos, atendidas, peças Miz e conversão de uma vendedora |
+| `mizloja_adm_vendas(…)` | **ADM:** lista de vendas com filtros, página e totais |
+| `mizloja_mesclar_clientes(manter, remover, nome, whatsapp)` | **ADM:** junta duplicadas (o site apaga a outra em seguida) |
+| `mizloja_excluir_cliente(id)` | **ADM:** com vendas anonimiza; sem vendas devolve `pode_apagar` (o site apaga) |
+| view `mizloja_v_clientes` | Clientes + status + etapa do kanban + aniversário + valor da última compra + `tem_peca_miz`; sem as removidas |
 
 Detalhes, parâmetros e regras em `docs/BANCO.md`.
 
@@ -88,9 +98,9 @@ src/app/              rotas, providers, guardas
 src/layouts/          layouts dos 3 painéis
 src/components/ui/    design system (importar de '@/components/ui')
 src/components/shared/ peças compostas reutilizáveis
-src/features/<assunto>/ admin-miz, auth, equipe, vendas, clientes, metas, hoje, config, dashboard, dev
-src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn, acesso, funcoes, cores, vendas, texto, id
-src/hooks/            useDadosLoja (equipe, config, mensagens, catálogo), useAtraso, useConexao, useTelaGrande, usePressionarLongo, useAoVoltarParaAba
+src/features/<assunto>/ admin-miz, auth, equipe, vendas, clientes, metas, hoje, perfil, config, dashboard, dev
+src/lib/              supabase, whatsapp, formatadores, cnpj, erros, cn, acesso, funcoes, cores, vendas, texto, id, periodo, csv
+src/hooks/            useDadosLoja (equipe, config, mensagens, catálogo), useAtraso, useConexao, useTelaGrande, usePressionarLongo, useAoVoltarParaAba, usePeriodo (período e vendedora na URL), useCaminhos (/clientes ou /adm/clientes)
 src/styles/           tokens.css (todos os tokens) e globals.css
 ```
 
@@ -121,12 +131,14 @@ Vitrine viva em `/dev/componentes` (só em `npm run dev`).
 | `Tabs`, `SegmentedControl`, `TopBar`, `BottomNav`, `Sidebar`, `Logo` | |
 | `SelectField` | lista de opções nativa com o visual dos campos |
 | `Deslizavel` | deslizar o cartão para o lado ("Pular hoje"); sempre com um botão da mesma ação |
+| `Checkbox` | seleção em lote (com estado parcial no cabeçalho) |
+| `BarrasHorizontais`, `Colunas` | gráficos só com tokens (seção 9): uma série = primary; destaque primary e resto border-strong; bolinha de cor opcional; tabela escondida para leitor de tela. Nunca pizza |
 
 ### Utilitários (`src/lib`, com testes)
-`normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11) · `formatarAniversario`, `formatarHora`, `saudacao` · `semAcento` · `novoId` · vendas: `PAGAMENTOS`, `rotuloPagamento`, `TAMANHOS_OUTRA`, `rotuloTamanho`, `textoItem` ("Blusa Mia · Preta · M · 1"), `resumirItens` ("Blusa Mia Preta M + 1 peça"), `instanteDaVenda`.
+`normalizarWhatsapp`, `mascararWhatsapp`, `formatarWhatsapp`, `whatsappValido`, `linkWhatsapp`, `montarMensagem`, `primeiroNome` · `formatarMoeda` (`{destaque}`), `formatarValor`, `formatarData`, `formatarDataHora`, `formatarDiaPorExtenso`, `dataRelativa`, `haDias` (sempre no fuso de São Paulo) · `validarCnpj`, `mascararCnpj` · `mensagemDeErro` (traduz erros do Supabase para a voz da seção 11) · `formatarAniversario`, `formatarHora`, `saudacao` · `semAcento` · `novoId` · período: `PRESETS`, `periodoDoPreset`, `variacao` ("+12% vs. período anterior"), `mesIso`, `nomeMes` · CSV: `gerarCsv` (";", vírgula decimal, BOM), `baixarArquivo` · vendas: `PAGAMENTOS`, `rotuloPagamento`, `TAMANHOS_OUTRA`, `rotuloTamanho`, `textoItem` ("Blusa Mia · Preta · M · 1"), `resumirItens` ("Blusa Mia Preta M + 1 peça"), `instanteDaVenda`.
 
 ### Rotas (`src/app/rotas.tsx`)
-Páginas carregadas sob demanda (`lazy`). As que ainda não existem usam `PaginaEmConstrucao` ("Em construção · Etapa X"): cada etapa troca o elemento pela página real.
+Páginas carregadas sob demanda (`lazy`). Ficha, kanban e Lançar venda servem aos dois painéis: na ADM ficam em `/adm/...` para não trocar de layout (use `useCaminhos`).
 | Rota | Quem | Página / etapa |
 | --- | --- | --- |
 | `/entrar`, `/trocar-senha` | deslogada / troca obrigatória | `features/auth` |
@@ -134,10 +146,12 @@ Páginas carregadas sob demanda (`lazy`). As que ainda não existem usam `Pagina
 | `/clientes` (`?coluna=`, `?filtro=sem_interesse`), `/clientes/:id` | vendedora | prontas (`features/clientes`) |
 | `/venda/nova` (`?cliente=:id` pula o passo 1) | vendedora | pronta (`features/vendas`) |
 | `/perfil` | vendedora | pronta (`features/perfil`) |
-| `/adm` · `/adm/vendas` | ADM | etapa 6 |
-| `/adm/clientes` | ADM | etapa 4 |
-| `/adm/equipe` · `/adm/config` | ADM | etapa 3 |
-| `/adm/metas` | ADM | etapa 5 |
+| `/adm` (`?periodo=&de=&ate=&vendedora=`) | ADM | Visão geral (`features/dashboard`) |
+| `/adm/vendas`, `/adm/vendas/:id` | ADM | lista e detalhe (`features/vendas`) |
+| `/adm/clientes` (`?visao=kanban`, `?etapa=`, `?aniversario=mes`), `/adm/clientes/:id` | ADM | tabela/kanban e a mesma ficha com ações a mais |
+| `/adm/equipe`, `/adm/equipe/:id` | ADM | `features/equipe` |
+| `/adm/metas` · `/adm/config` | ADM | `features/metas/MetasAdm`, `features/config` |
+| `/adm/venda/nova` | ADM | o mesmo Lançar venda, com o campo Vendedora no passo 3 |
 | `/miz/lojas`, `/miz/lojas/:id`, `/miz/catalogo`, `/miz/catalogo/:id` (`nova` = peça nova), `/miz/admins` | Admin Miz | prontas (`features/admin-miz`) |
 | `/dev/componentes` | só em `npm run dev` | vitrine |
 
@@ -159,7 +173,8 @@ Tudo que cria conta no Auth, gera senha ou bloqueia login passa por Edge Functio
 | `mizloja-nova-senha` | ADM (vendedoras dela) ou Admin Miz | `{usuario_id}` → `AcessoCriado` (volta a exigir troca) |
 | `mizloja-alterar-situacao` | ADM (vendedoras) ou Admin Miz (lojas, usuárias, admins) | `{tipo:'usuaria'\|'loja'\|'admin', id, situacao:'ativa'\|'inativa'}` (desativar bloqueia o login no Auth) |
 | `mizloja-criar-admin` | Admin Miz | `{nome, whatsapp}` → `AcessoCriado` |
-| `mizloja-primeiro-admin` | ninguém (temporária, versão **desligada** no repositório) | ver `docs/TESTES-PENDENTES.md` item 1 |
+| `mizloja-alterar-login` | ADM (vendedoras dela) ou Admin Miz (a dona) | `{usuario_id, whatsapp}` → `AcessoCriado` (troca WhatsApp, usuário e e-mail técnico juntos; senha nova com troca obrigatória) |
+| `mizloja-primeiro-admin` | ninguém (temporária, versão **desligada** no repositório) | ver `docs/TESTES-PENDENTES.md`, passo 2 |
 | `mizloja-seed-demo` | Admin Miz (temporária, não publicada) | `{acao:'carregar'\|'remover'}` — ver `docs/DEMO.md` |
 
 - Código comum em `_shared/` (CORS por `ALLOWED_ORIGINS`, `quemChama`, `exigirAdminMiz`, `gerarSenha`, `criarContaAuth`, `bloquearLogin`).
@@ -167,7 +182,7 @@ Tudo que cria conta no Auth, gera senha ou bloqueia login passa por Edge Functio
 - `AcessoCriado` mostra usuário e senha **uma vez** (componente `AcessoCriado`, com "Enviar pelo WhatsApp" e "Copiar").
 
 ### Componentes compartilhados (`src/components/shared`)
-`TelaCarregando`, `PaginaEmConstrucao`, `AcessoCriado`, `CabecalhoPagina` (título, subtítulo, ação), `ListaCarregando` (em `EstadoCarregando`), `BotaoWhatsapp` (registra o contato com a pasta, ou sem pasta fora de Hoje, e abre o wa.me).
+`TelaCarregando`, `AcessoCriado`, `FiltroPeriodo` (período + vendedora do painel), `TrocarSenhaCard`, `CabecalhoPagina` (título, subtítulo, ação), `ListaCarregando` (em `EstadoCarregando`), `BotaoWhatsapp` (registra o contato com a pasta, ou sem pasta fora de Hoje, e abre o wa.me).
 
 ### Painel da vendedora (padrões)
 - Tudo vale igual para a vendedora e para a ADM em modo vendedora: vendas, contatos e pulos ficam em nome de quem está logada.
@@ -182,9 +197,16 @@ Tudo que cria conta no Auth, gera senha ou bloqueia login passa por Edge Functio
 - Salvar: `salvarVenda(pacote)`. Sem conexão (ou erro de rede), o pacote vai para a fila (`fila.ts`, `localStorage` `mizloja-fila-vendas`) com o mesmo id da venda. `AvisoFilaVendas` (no `LayoutVendedora`) mostra "1 venda aguardando envio" e reenvia ao abrir, quando a conexão volta e a cada 30 s. Reenviar não duplica. Venda recusada pelo banco fica na faixa com o motivo e pode ser descartada.
 - Barra de ação presa acima do rodapé: classes `barra-acao` + `espaco-barra-acao` (em `globals.css`).
 
+### Painel da ADM (padrões)
+- Toda leitura agregada vem das funções `mizloja_painel_*` / `mizloja_adm_vendas` (o banco confere ADM); tipos em `features/dashboard/api.ts` e `features/vendas/admApi.ts`.
+- Tabela de clientes: filtros, ordenação e páginas direto na view com `count: 'exact'` (`features/clientes/admApi.ts`); exportar busca tudo de 1000 em 1000.
+- Indicadores com variação: `Indicadores` (`features/dashboard`). Período na URL com `usePeriodo` + `FiltroPeriodo`.
+- Venda pela ADM: edita tudo pela API (sem limite de 24 h); o gatilho registra em `mizloja_alteracoes` e `descreverAlteracao` mostra "antes → depois". Venda precisa de pelo menos 1 item (a tela não deixa remover o último).
+- Metas: `mizloja_metas` + `mizloja_metas_vendedoras` gravadas pela API (update por id, insert do que falta; valor vazio = sem meta individual).
+
 ### Loja Demonstração e deploy
 - Demonstração: `docs/DEMO.md` (função `mizloja-seed-demo` + `supabase/seed-demo/dados.sql` e `verificar.sql`; CNPJ de teste 99.999.999/0001-91).
-- Deploy: `Dockerfile` (Node 22 → nginx), `nginx.conf`, guia em `docs/DEPLOY-EASYPANEL.md`. As `VITE_*` são build args.
+- Deploy: `Dockerfile` (Node 22 → nginx), `nginx.conf`, guia em `docs/DEPLOY-EASYPANEL.md`. As `VITE_*` são build args. Antes de publicar: `docs/ANTES-DE-PUBLICAR.md`.
 
 ## Como trabalhar
 - **Sempre planejar antes de codar:** apresentar o plano (arquivos, migrations, riscos) e esperar aprovação quando a mudança for estrutural.
