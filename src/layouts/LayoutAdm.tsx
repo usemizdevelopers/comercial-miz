@@ -4,6 +4,7 @@ import { SignOut } from '@phosphor-icons/react'
 import { BottomNav, BottomSheet, Sidebar } from '@/components/ui'
 import { useSessao } from '@/app/sessao/sessaoContexto'
 import { cn } from '@/lib/cn'
+import { AvisoFilaVendas } from '@/features/vendas/AvisoFilaVendas'
 import { ICONE_MAIS, ICONE_MODO_VENDEDORA, NAV_ADM, NAV_ADM_RODAPE_ROTAS, rotaAtiva } from './navegacao'
 
 /**
@@ -42,16 +43,17 @@ export function LayoutAdm() {
     <div className="min-h-tela lg:pl-sidebar">
       <Sidebar
         itens={itensLaterais}
-        onVenda={() => navegar('/venda/nova')}
+        onVenda={() => navegar('/adm/venda/nova')}
         rodape={{ loja: usuaria?.lojaNome ?? undefined, pessoa: usuaria?.nome }}
         onSair={() => void sair()}
       />
+      <AvisoFilaVendas />
       <main className="pb-rodape lg:pb-10">
         <div className="area-segura-baixo">
           <Outlet />
         </div>
       </main>
-      <BottomNav itens={itensRodape} onVenda={() => navegar('/venda/nova')} vendaAtiva={pathname === '/venda/nova'} />
+      <BottomNav itens={itensRodape} onVenda={() => navegar('/adm/venda/nova')} vendaAtiva={pathname === '/adm/venda/nova'} />
 
       <BottomSheet aberta={maisAberto} onFechar={() => setMaisAberto(false)} titulo="Mais">
         <nav aria-label="Mais opções" className="flex flex-col gap-1">

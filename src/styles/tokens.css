@@ -104,6 +104,9 @@
   --size-form-max: 720px;
   --size-content-max: 1200px;
   --size-banner: 36px;
+  --size-chart: 200px; /* altura do gráfico de colunas */
+  --size-chart-label: 112px; /* coluna de rótulos das barras horizontais */
+  --size-bar: 20px; /* espessura das barras horizontais (máx. 24) */
 
   /* Grid */
   --gutter: 20px;

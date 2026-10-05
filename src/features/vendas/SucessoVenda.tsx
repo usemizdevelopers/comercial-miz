@@ -15,7 +15,17 @@ export interface DadosSucesso {
 }
 
 /** Depois de salvar: valor, quanto falta para a meta e as 3 ações. */
-export function SucessoVenda({ dados, onNovaVenda, onIrParaHoje }: { dados: DadosSucesso; onNovaVenda: () => void; onIrParaHoje: () => void }) {
+export function SucessoVenda({
+  dados,
+  onNovaVenda,
+  onIrParaHoje,
+  rotuloInicio = 'Ir para Hoje',
+}: {
+  dados: DadosSucesso
+  onNovaVenda: () => void
+  onIrParaHoje: () => void
+  rotuloInicio?: string
+}) {
   const { data: resumo, isLoading } = useResumoMes()
   const falta = faltaParaMeta(resumo)
 
@@ -60,7 +70,7 @@ export function SucessoVenda({ dados, onNovaVenda, onIrParaHoje }: { dados: Dado
           Nova venda
         </Button>
         <Button variante="texto" className="self-center" onClick={onIrParaHoje}>
-          Ir para Hoje
+          {rotuloInicio}
         </Button>
       </div>
     </div>

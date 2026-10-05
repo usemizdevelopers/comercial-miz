@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button, Card, SkeletonCard, StepIndicator, TopBar, lerDataPartes } from '@/components/ui'
 import { useSessao } from '@/app/sessao/sessaoContexto'
 import { buscarCliente } from '@/features/clientes/api'
+import { useCaminhos } from '@/hooks/useCaminhos'
 import { mensagemDeErro } from '@/lib/erros'
 import { novoId } from '@/lib/id'
 import { instanteDaVenda } from '@/lib/vendas'
@@ -35,6 +36,7 @@ export default function LancarVenda() {
   const { usuaria } = useSessao()
   const uid = usuaria?.id ?? ''
   const navegar = useNavigate()
+  const caminhos = useCaminhos()
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const clienteParam = params.get('cliente')
@@ -167,7 +169,7 @@ export default function LancarVenda() {
   if (sucesso) {
     return (
       <div ref={topo} tabIndex={-1} className="outline-none">
-        <SucessoVenda dados={sucesso} onNovaVenda={novaVenda} onIrParaHoje={() => navegar('/hoje')} />
+        <SucessoVenda dados={sucesso} onNovaVenda={novaVenda} onIrParaHoje={() => navegar(caminhos.inicio)} rotuloInicio={caminhos.adm ? 'Ir para a Visão geral' : 'Ir para Hoje'} />
       </div>
     )
   }

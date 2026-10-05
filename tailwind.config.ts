@@ -56,6 +56,9 @@ const espacos = {
   'bolinha-sm': v('size-dot-sm'),
   logo: v('size-logo'),
   faixa: v('size-banner'),
+  grafico: v('size-chart'),
+  'grafico-rotulo': v('size-chart-label'),
+  'barra-h': v('size-bar'),
 }
 
 const config: Config = {

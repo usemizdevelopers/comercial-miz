@@ -5,6 +5,7 @@ import { ArrowsLeftRight, ChatCircleText, PencilSimple, Plus } from '@phosphor-i
 import { BolinhaCor, Button, Card, EmptyState, Overline, SkeletonCard, StatusBadge, TextArea, TopBar, useToast } from '@/components/ui'
 import { BotaoWhatsapp } from '@/components/shared/BotaoWhatsapp'
 import { useSessao } from '@/app/sessao/sessaoContexto'
+import { useCaminhos } from '@/hooks/useCaminhos'
 import { useHexDasCores, useNomesEquipe } from '@/hooks/useDadosLoja'
 import { mensagemDeErro } from '@/lib/erros'
 import { formatarAniversario, formatarData, formatarMoeda, formatarNumero, haDias } from '@/lib/formatadores'
@@ -21,6 +22,7 @@ const PASTAS: Record<string, string> = { follow_up: 'Follow-up', pos_venda: 'Pó
 export default function FichaCliente() {
   const { id = '' } = useParams()
   const navegar = useNavigate()
+  const caminhos = useCaminhos()
   const { usuaria } = useSessao()
   const minhaId = usuaria?.id ?? ''
   const hex = useHexDasCores()
@@ -31,7 +33,7 @@ export default function FichaCliente() {
   const vendas = useQuery({ queryKey: ['cliente', id, 'vendas'], queryFn: () => vendasDaCliente(id), enabled: !!id })
   const linha = useQuery({ queryKey: ['cliente', id, 'linha'], queryFn: () => linhaDoTempo(id), enabled: !!id })
 
-  const voltar = () => (window.history.length > 1 ? navegar(-1) : navegar('/clientes'))
+  const voltar = () => (window.history.length > 1 ? navegar(-1) : navegar(caminhos.clientes))
 
   if (cliente.isLoading) {
     return (
@@ -52,7 +54,7 @@ export default function FichaCliente() {
         <TopBar titulo="Cliente" onVoltar={voltar} />
         <EmptyState
           texto={cliente.error ? mensagemDeErro(cliente.error) : 'Cliente não encontrada.'}
-          acao={<Button variante="secundario" onClick={() => navegar('/clientes')}>Ver clientes</Button>}
+          acao={<Button variante="secundario" onClick={() => navegar(caminhos.clientes)}>Ver clientes</Button>}
         />
       </>
     )
@@ -80,7 +82,7 @@ export default function FichaCliente() {
           </div>
           <div className="flex flex-wrap gap-3">
             <BotaoWhatsapp clienteId={c.id} whatsapp={c.whatsapp} tamanho="medio" />
-            <Button icone={<Plus weight="light" className="h-icone w-icone" />} onClick={() => navegar(`/venda/nova?cliente=${c.id}`)}>
+            <Button icone={<Plus weight="light" className="h-icone w-icone" />} onClick={() => navegar(caminhos.novaVenda(c.id))}>
               Nova venda
             </Button>
             {podeTransferir && (

@@ -32,6 +32,8 @@ import {
   ConfirmSheet,
   DateParts,
   Deslizavel,
+  BarrasHorizontais,
+  Colunas,
   EmptyState,
   FabVenda,
   ItemLinha,
@@ -348,6 +350,39 @@ export default function VitrineComponentes() {
               />
             </Deslizavel>
             <CardVenda cliente="Ana Paula Ribeiro" valor={289.8} itens="Blusa Mia Preta M + 1 peça" rodape="03/10 · Carla · PIX" onClick={() => {}} />
+          </div>
+        </Secao>
+
+        <Secao titulo="Gráficos">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <Colunas
+                rotulo="Faturamento por dia"
+                formatar={(n) => `R$ ${n}`}
+                itens={[320, 0, 890, 450, 1200, 640, 980].map((v, i) => ({ id: String(i), rotulo: String(i + 1), descricao: `${i + 1} de out. · R$ ${v}`, valor: v, destaque: i === 6 }))}
+              />
+            </Card>
+            <Card>
+              <BarrasHorizontais
+                rotulo="Cores mais vendidas"
+                itens={[
+                  { id: 'p', rotulo: 'Preta', valor: 42, hex: '#000000' },
+                  { id: 'o', rotulo: 'Off White', valor: 30, hex: '#f1eef1' },
+                  { id: 'c', rotulo: 'Caqui', valor: 18, hex: '#a08f6e' },
+                  { id: 'a', rotulo: 'azul bebê (outra marca)', valor: 6, hex: null },
+                ]}
+              />
+            </Card>
+            <Card>
+              <BarrasHorizontais
+                rotulo="Vendas por vendedora"
+                itens={[
+                  { id: 'j', rotulo: 'Júlia', valor: 4320, texto: 'R$ 4.320 · 23', destaque: true },
+                  { id: 'p', rotulo: 'Paula', valor: 3100, texto: 'R$ 3.100 · 17' },
+                  { id: 'm', rotulo: 'Mariana', valor: 0, texto: 'R$ 0 · 0' },
+                ]}
+              />
+            </Card>
           </div>
         </Secao>
 

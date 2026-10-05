@@ -20,6 +20,7 @@ import {
 } from '@/components/ui'
 import { BotaoWhatsapp } from '@/components/shared/BotaoWhatsapp'
 import { useSessao } from '@/app/sessao/sessaoContexto'
+import { useCaminhos } from '@/hooks/useCaminhos'
 import { useConfigLoja } from '@/hooks/useDadosLoja'
 import { usePressionarLongo } from '@/hooks/usePressionarLongo'
 import { useTelaGrande } from '@/hooks/useTelaGrande'
@@ -44,6 +45,7 @@ export default function Clientes() {
   const { usuaria } = useSessao()
   const minhaId = usuaria?.id ?? ''
   const navegar = useNavigate()
+  const caminhos = useCaminhos()
   const toast = useToast()
   const queryClient = useQueryClient()
   const telaGrande = useTelaGrande()
@@ -96,7 +98,7 @@ export default function Clientes() {
     }
   }
 
-  const cartao = (c: ClienteView) => <CartaoKanban key={c.id} cliente={c} onAbrir={() => navegar(`/clientes/${c.id}`)} onMover={() => setMover(c)} />
+  const cartao = (c: ClienteView) => <CartaoKanban key={c.id} cliente={c} onAbrir={() => navegar(caminhos.ficha(c.id))} onMover={() => setMover(c)} />
 
   const abas = ETAPAS_QUADRO.map((e) => ({ id: e.id, rotulo: e.rotulo, contador: grupos[e.id].length }))
 
@@ -120,7 +122,7 @@ export default function Clientes() {
         <EmptyState
           icone={<UsersThree weight="light" />}
           texto="Ainda não há clientes. Elas entram aqui ao lançar a primeira venda."
-          acao={<Button onClick={() => navegar('/venda/nova')}>Lançar venda</Button>}
+          acao={<Button onClick={() => navegar(caminhos.novaVenda())}>Lançar venda</Button>}
         />
       </Card>
     )
