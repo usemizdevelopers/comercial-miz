@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowsLeftRight, ChatCircleText, PencilSimple, Plus } from '@phosphor-icons/react'
-import { BolinhaCor, Button, Card, EmptyState, Overline, SkeletonCard, StatusBadge, TextArea, TopBar, useToast } from '@/components/ui'
+import { ArrowsLeftRight, ChatCircleText, PencilSimple, Plus, Trash, UsersThree } from '@phosphor-icons/react'
+import { BolinhaCor, Button, Card, ConfirmSheet, EmptyState, Overline, SkeletonCard, StatusBadge, TextArea, TopBar, useToast } from '@/components/ui'
 import { BotaoWhatsapp } from '@/components/shared/BotaoWhatsapp'
 import { useSessao } from '@/app/sessao/sessaoContexto'
 import { useCaminhos } from '@/hooks/useCaminhos'
@@ -14,6 +14,8 @@ import { rotuloTamanho } from '@/lib/vendas'
 import { atualizarCliente, buscarCliente, linhaDoTempo, vendasDaCliente, type EventoLinhaTempo } from './api'
 import { FolhaEditarCliente } from './FolhaEditarCliente'
 import { FolhaTransferir } from './FolhaTransferir'
+import { FolhaMesclar } from './FolhaMesclar'
+import { excluirCliente } from './admApi'
 import { HistoricoCompras } from './HistoricoCompras'
 
 const PASTAS: Record<string, string> = { follow_up: 'Follow-up', pos_venda: 'Pós-venda', aniversario: 'Aniversário' }
@@ -28,6 +30,11 @@ export default function FichaCliente() {
   const hex = useHexDasCores()
   const [editando, setEditando] = useState(false)
   const [transferindo, setTransferindo] = useState(false)
+  const [mesclando, setMesclando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [ocupado, setOcupado] = useState(false)
+  const toast = useToast()
+  const queryClient = useQueryClient()
 
   const cliente = useQuery({ queryKey: ['cliente', id], queryFn: () => buscarCliente(id), enabled: !!id })
   const vendas = useQuery({ queryKey: ['cliente', id, 'vendas'], queryFn: () => vendasDaCliente(id), enabled: !!id })
@@ -61,6 +68,8 @@ export default function FichaCliente() {
   }
 
   const souAdm = usuaria?.papel === 'adm'
+  // ações a mais da dona (seção 14), só no painel da ADM
+  const painelAdm = souAdm && caminhos.adm
   const podeTransferir = souAdm || !c.vendedora_id || c.vendedora_id === minhaId
   const pecas = Array.isArray(c.pecas_miz_compradas) ? (c.pecas_miz_compradas as Array<{ peca_id: string; nome: string; quantidade: number }>) : []
   const aniversario = formatarAniversario(c.aniv_dia, c.aniv_mes)
@@ -87,12 +96,22 @@ export default function FichaCliente() {
             </Button>
             {podeTransferir && (
               <Button variante="secundario" icone={<ArrowsLeftRight weight="light" className="h-icone w-icone" />} onClick={() => setTransferindo(true)}>
-                Transferir
+                {painelAdm ? 'Trocar responsável' : 'Transferir'}
               </Button>
             )}
             <Button variante="secundario" icone={<PencilSimple weight="light" className="h-icone w-icone" />} onClick={() => setEditando(true)}>
               Editar
             </Button>
+            {painelAdm && (
+              <>
+                <Button variante="secundario" icone={<UsersThree weight="light" className="h-icone w-icone" />} onClick={() => setMesclando(true)}>
+                  Mesclar duplicada
+                </Button>
+                <Button variante="destrutivo" icone={<Trash weight="light" className="h-icone w-icone" />} onClick={() => setExcluindo(true)}>
+                  Excluir
+                </Button>
+              </>
+            )}
           </div>
         </section>
 
@@ -149,7 +168,7 @@ export default function FichaCliente() {
         {/* 4. Histórico de compras */}
         <section className="flex flex-col gap-3">
           <Overline>Histórico de compras</Overline>
-          {vendas.isLoading ? <SkeletonCard linhas={2} /> : <HistoricoCompras clienteId={c.id} vendas={vendas.data ?? []} minhaId={minhaId} />}
+          {vendas.isLoading ? <SkeletonCard linhas={2} /> : <HistoricoCompras clienteId={c.id} vendas={vendas.data ?? []} minhaId={minhaId} onAbrirVenda={painelAdm ? (v) => navegar(`/adm/vendas/${v}`) : undefined} />}
         </section>
 
         {/* 6. Observações */}
@@ -164,6 +183,38 @@ export default function FichaCliente() {
 
       <FolhaEditarCliente cliente={c} aberta={editando} onFechar={() => setEditando(false)} />
       <FolhaTransferir cliente={c} aberta={transferindo} onFechar={() => setTransferindo(false)} />
+      {painelAdm && (
+        <>
+          <FolhaMesclar cliente={c} aberta={mesclando} onFechar={() => setMesclando(false)} />
+          <ConfirmSheet
+            aberta={excluindo}
+            onFechar={() => setExcluindo(false)}
+            pergunta={`Excluir ${c.nome}?`}
+            consequencia={
+              compras > 0
+                ? 'Ela tem vendas: as vendas continuam nos números da loja como "Cliente removida". Nome, WhatsApp, aniversário e observações são apagados e ela sai das listas e das pastas.'
+                : 'Ela não tem vendas e será apagada de vez, com os contatos registrados.'
+            }
+            textoConfirmar="Excluir cliente"
+            destrutivo
+            carregando={ocupado}
+            onConfirmar={() => {
+              setOcupado(true)
+              excluirCliente(c.id)
+                .then((r) => {
+                  toast.mostrar(r === 'apagada' ? 'Cliente apagada' : 'Cliente removida; as vendas continuam nos números')
+                  void queryClient.invalidateQueries({ queryKey: ['clientes'] })
+                  navegar('/adm/clientes', { replace: true })
+                })
+                .catch((e: unknown) => toast.mostrar(mensagemDeErro(e)))
+                .finally(() => {
+                  setOcupado(false)
+                  setExcluindo(false)
+                })
+            }}
+          />
+        </>
+      )}
     </>
   )
 }

@@ -41,7 +41,7 @@ const COLUNAS_MANUAIS: EtapaKanban[] = ['novas', 'em_conversa']
  * computador: 6 colunas lado a lado, arrastando entre Novas e Em conversa.
  * "Sem interesse" fica fora do quadro, num filtro.
  */
-export default function Clientes() {
+export default function Clientes({ embutido = false }: { embutido?: boolean } = {}) {
   const { usuaria } = useSessao()
   const minhaId = usuaria?.id ?? ''
   const navegar = useNavigate()
@@ -54,7 +54,7 @@ export default function Clientes() {
 
   // Vendedora com visibilidade "proprias" vê só as dela; ADM (modo vendedora) pode ver todas
   const soPropriasPelaLoja = usuaria?.papel === 'vendedora' && (config?.visibilidade_vendedora ?? 'proprias') === 'proprias'
-  const [escopo, setEscopo] = useState<'minhas' | 'todas'>('minhas')
+  const [escopo, setEscopo] = useState<'minhas' | 'todas'>(embutido ? 'todas' : 'minhas')
   const [busca, setBusca] = useState('')
   const [selo, setSelo] = useState<SeloFiltro | null>(null)
   const [mover, setMover] = useState<ClienteView | null>(null)
@@ -146,7 +146,7 @@ export default function Clientes() {
 
   return (
     <>
-      <TopBar titulo="Clientes" />
+      {!embutido && <TopBar titulo="Clientes" />}
       <div className={cn('mx-auto flex w-full flex-col gap-4 px-gutter pb-10 pt-2', telaGrande && !semInteresse ? 'max-w-none' : 'max-w-conteudo')}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <SearchField value={busca} onChange={setBusca} placeholder="Nome ou WhatsApp" rotuloAcessivel="Buscar cliente" className="lg:max-w-form lg:flex-1" />

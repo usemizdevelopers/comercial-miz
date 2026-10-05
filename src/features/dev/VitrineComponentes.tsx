@@ -32,6 +32,7 @@ import {
   ConfirmSheet,
   DateParts,
   Deslizavel,
+  Checkbox,
   BarrasHorizontais,
   Colunas,
   EmptyState,
@@ -353,6 +354,10 @@ export default function VitrineComponentes() {
           </div>
         </Secao>
 
+        <Secao titulo="Seleção em lote">
+          <CaixasDeSelecao />
+        </Secao>
+
         <Secao titulo="Gráficos">
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
@@ -488,6 +493,31 @@ export default function VitrineComponentes() {
           { id: 'per', rotulo: 'Perfil', icone: <ClipboardText weight="light" />, onClick: () => {} },
         ]}
       />
+    </div>
+  )
+}
+
+function CaixasDeSelecao() {
+  const [marcadas, setMarcadas] = useState<string[]>(['b'])
+  const todas = ['a', 'b', 'c']
+  const alternar = (id: string) => setMarcadas((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]))
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          rotulo="Selecionar todas"
+          marcado={marcadas.length === todas.length}
+          indeterminado={marcadas.length > 0 && marcadas.length < todas.length}
+          onMudar={(v) => setMarcadas(v ? todas : [])}
+        />
+        <span className="text-label">Todas</span>
+      </div>
+      {todas.map((id) => (
+        <div key={id} className="flex items-center gap-2">
+          <Checkbox rotulo={`Cliente ${id}`} marcado={marcadas.includes(id)} onMudar={() => alternar(id)} />
+          <span className="text-body">Cliente {id.toUpperCase()}</span>
+        </div>
+      ))}
     </div>
   )
 }

@@ -23,6 +23,7 @@ const Equipe = lazy(() => import('@/features/equipe/Equipe'))
 const Vendedora = lazy(() => import('@/features/equipe/Vendedora'))
 const Configuracoes = lazy(() => import('@/features/config/Configuracoes'))
 const MetasAdm = lazy(() => import('@/features/metas/MetasAdm'))
+const ClientesAdm = lazy(() => import('@/features/clientes/ClientesAdm'))
 // Vitrine dos componentes: só existe em desenvolvimento (fica fora do build de produção)
 const VitrineComponentes = import.meta.env.DEV ? lazy(() => import('@/features/dev/VitrineComponentes')) : null
 
@@ -77,7 +78,7 @@ export function Rotas() {
       >
         <Route path="/adm" element={<PaginaEmConstrucao titulo="Visão geral" etapa={6} />} />
         <Route path="/adm/vendas" element={<PaginaEmConstrucao titulo="Vendas" etapa={6} />} />
-        <Route path="/adm/clientes" element={<PaginaEmConstrucao titulo="Clientes" etapa={4} />} />
+        <Route path="/adm/clientes" element={<ClientesAdm />} />
         <Route path="/adm/equipe" element={<Equipe />} />
         <Route path="/adm/equipe/:id" element={<Vendedora />} />
         <Route path="/adm/clientes/:id" element={<FichaCliente />} />

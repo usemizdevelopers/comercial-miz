@@ -29,7 +29,18 @@ function podeMexer(v: VendaDaCliente, minhaId: string, agora: number): boolean {
 }
 
 /** Histórico de compras: da mais recente para a mais antiga; toque expande os itens. */
-export function HistoricoCompras({ clienteId, vendas, minhaId }: { clienteId: string; vendas: VendaDaCliente[]; minhaId: string }) {
+export function HistoricoCompras({
+  clienteId,
+  vendas,
+  minhaId,
+  onAbrirVenda,
+}: {
+  clienteId: string
+  vendas: VendaDaCliente[]
+  minhaId: string
+  /** ADM: abre o detalhe da venda (editar tudo, sem limite de 24 h) */
+  onAbrirVenda?: (id: string) => void
+}) {
   const nomes = useNomesEquipe()
   const [aberta, setAberta] = useState<string | null>(null)
   const [editando, setEditando] = useState<VendaDaCliente | null>(null)
@@ -82,7 +93,12 @@ export function HistoricoCompras({ clienteId, vendas, minhaId }: { clienteId: st
                         <ItemLinha key={i.id} hex={i.cor_hex} texto={textoItem(i)} />
                       ))}
                     </div>
-                    {mexe && (
+                    {onAbrirVenda && (
+                      <Button variante="secundario" tamanho="pequeno" className="self-start" onClick={() => onAbrirVenda(v.id)}>
+                        Abrir venda
+                      </Button>
+                    )}
+                    {mexe && !onAbrirVenda && (
                       <div className="flex flex-wrap gap-3">
                         <Button variante="secundario" tamanho="pequeno" icone={<PencilSimple weight="light" className="h-icone w-icone" />} onClick={() => setEditando(v)}>
                           Editar valor e pagamento
@@ -92,7 +108,7 @@ export function HistoricoCompras({ clienteId, vendas, minhaId }: { clienteId: st
                         </Button>
                       </div>
                     )}
-                    {mexe && <p className="text-caption text-text-tertiary">Para trocar peças, exclua e lance a venda de novo.</p>}
+                    {mexe && !onAbrirVenda && <p className="text-caption text-text-tertiary">Para trocar peças, exclua e lance a venda de novo.</p>}
                   </div>
                 )}
               </Card>
