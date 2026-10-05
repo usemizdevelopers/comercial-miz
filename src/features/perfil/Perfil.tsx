@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, SignOut } from '@phosphor-icons/react'
-import { Button, Card, Overline, PasswordField, TextField, TopBar, useToast } from '@/components/ui'
+import { Button, Card, Overline, TextField, TopBar, useToast } from '@/components/ui'
+import { TrocarSenhaCard } from '@/components/shared/TrocarSenhaCard'
 import { useSessao } from '@/app/sessao/sessaoContexto'
 import { supabase } from '@/lib/supabase'
 import { mensagemDeErro } from '@/lib/erros'
-import { SENHA_MINIMO } from '@/lib/acesso'
 import { formatarWhatsapp } from '@/lib/whatsapp'
 
 /** /perfil — nome (editável), WhatsApp e usuário (só leitura: são o login), loja, trocar senha e sair. */
@@ -61,7 +61,7 @@ export default function Perfil() {
           <p className="text-caption text-text-tertiary">WhatsApp e usuário são o seu login e não mudam por aqui. Para trocar, fale com a dona da loja.</p>
         </Card>
 
-        <TrocarSenha />
+        <TrocarSenhaCard />
 
         <Button variante="secundario" icone={<SignOut weight="light" className="h-icone w-icone" />} onClick={() => void sair()}>
           Sair
@@ -105,59 +105,6 @@ function NomeEditavel({ nomeAtual, onSalvo }: { nomeAtual: string; onSalvo: () =
           Salvar nome
         </Button>
       )}
-    </Card>
-  )
-}
-
-function TrocarSenha() {
-  const toast = useToast()
-  const [senha, setSenha] = useState('')
-  const [confirmacao, setConfirmacao] = useState('')
-  const [tentou, setTentou] = useState(false)
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
-
-  const erroSenha = senha.length < SENHA_MINIMO ? `A senha precisa ter pelo menos ${SENHA_MINIMO} caracteres` : null
-  const erroConfirmacao = confirmacao !== senha ? 'As duas senhas precisam ser iguais' : null
-
-  const trocar = async () => {
-    setTentou(true)
-    if (erroSenha || erroConfirmacao) return
-    setSalvando(true)
-    setErro(null)
-    try {
-      const { error } = await supabase.auth.updateUser({ password: senha })
-      if (error) throw error
-      setSenha('')
-      setConfirmacao('')
-      setTentou(false)
-      toast.mostrar('Senha trocada')
-    } catch (e) {
-      setErro(mensagemDeErro(e))
-    } finally {
-      setSalvando(false)
-    }
-  }
-
-  return (
-    <Card className="flex flex-col gap-4">
-      <Overline>Trocar senha</Overline>
-      <PasswordField rotulo="Nova senha" autoComplete="new-password" value={senha} onChange={(e) => setSenha(e.target.value)} erro={tentou ? erroSenha : undefined} />
-      <PasswordField
-        rotulo="Confirme a nova senha"
-        autoComplete="new-password"
-        value={confirmacao}
-        onChange={(e) => setConfirmacao(e.target.value)}
-        erro={tentou ? erroConfirmacao : undefined}
-      />
-      {erro && (
-        <p role="alert" className="rounded-md bg-danger-soft px-4 py-3 text-body-sm text-danger">
-          {erro}
-        </p>
-      )}
-      <Button variante="secundario" className="self-start" carregando={salvando} disabled={!senha} onClick={() => void trocar()}>
-        Trocar senha
-      </Button>
     </Card>
   )
 }
