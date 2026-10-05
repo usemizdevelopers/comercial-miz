@@ -663,7 +663,7 @@ export type Database = {
           ultimo_contato_por: string | null
           updated_at: string
           vendedora_id: string | null
-          whatsapp: string
+          whatsapp: string | null
         }
         Insert: {
           aniv_ano?: number | null
@@ -692,7 +692,7 @@ export type Database = {
           ultimo_contato_por?: string | null
           updated_at?: string
           vendedora_id?: string | null
-          whatsapp: string
+          whatsapp?: string | null
         }
         Update: {
           aniv_ano?: number | null
@@ -721,7 +721,7 @@ export type Database = {
           ultimo_contato_por?: string | null
           updated_at?: string
           vendedora_id?: string | null
-          whatsapp?: string
+          whatsapp?: string | null
         }
         Relationships: [
           {
@@ -750,6 +750,64 @@ export type Database = {
             columns: ["vendedora_id"]
             isOneToOne: false
             referencedRelation: "mizloja_usuarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mizloja_clientes_mesclas: {
+        Row: {
+          cliente_mantida_id: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          loja_id: string
+          mantida_antes: Json
+          removida: Json
+          removida_id: string
+          vendas_movidas: number
+        }
+        Insert: {
+          cliente_mantida_id: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          loja_id: string
+          mantida_antes: Json
+          removida: Json
+          removida_id: string
+          vendas_movidas?: number
+        }
+        Update: {
+          cliente_mantida_id?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          loja_id?: string
+          mantida_antes?: Json
+          removida?: Json
+          removida_id?: string
+          vendas_movidas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mizloja_clientes_mesclas_cliente_mantida_id_fkey"
+            columns: ["cliente_mantida_id"]
+            isOneToOne: false
+            referencedRelation: "mizloja_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mizloja_clientes_mesclas_cliente_mantida_id_fkey"
+            columns: ["cliente_mantida_id"]
+            isOneToOne: false
+            referencedRelation: "mizloja_v_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mizloja_clientes_mesclas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "mizloja_lojas"
             referencedColumns: ["id"]
           },
         ]
@@ -2100,6 +2158,7 @@ export type Database = {
           recado_transferencia: string | null
           status: string | null
           tamanho_preferido: string | null
+          tem_peca_miz: boolean | null
           ticket_medio: number | null
           total_gasto: number | null
           ultima_compra_em: string | null
@@ -2146,6 +2205,22 @@ export type Database = {
     Functions: {
       is_admin: { Args: never; Returns: boolean }
       is_approved: { Args: never; Returns: boolean }
+      mizloja_adm_vendas: {
+        Args: {
+          p_cor?: string
+          p_excluidas?: boolean
+          p_fim: string
+          p_inicio: string
+          p_limite?: number
+          p_miz?: boolean
+          p_offset?: number
+          p_pagamento?: string
+          p_peca_id?: string
+          p_tamanho?: string
+          p_vendedora_id?: string
+        }
+        Returns: Json
+      }
       mizloja_alterar_meu_nome: { Args: { p_nome: string }; Returns: string }
       mizloja_buscar_clientes: {
         Args: { p_limite?: number; p_termo: string }
@@ -2168,6 +2243,7 @@ export type Database = {
       }
       mizloja_data_local: { Args: { p_instante: string }; Returns: string }
       mizloja_eh_interno: { Args: never; Returns: boolean }
+      mizloja_excluir_cliente: { Args: { p_id: string }; Returns: string }
       mizloja_hoje: { Args: never; Returns: string }
       mizloja_lancar_venda: {
         Args: {
@@ -2179,6 +2255,15 @@ export type Database = {
           p_vendedora_id?: string
         }
         Returns: string
+      }
+      mizloja_mesclar_clientes: {
+        Args: {
+          p_manter: string
+          p_nome: string
+          p_remover: string
+          p_whatsapp: string
+        }
+        Returns: Json
       }
       mizloja_meu_historico_metas: {
         Args: { p_meses?: number }
@@ -2223,6 +2308,19 @@ export type Database = {
         Args: { p_valor: string }
         Returns: string
       }
+      mizloja_painel_meta: { Args: { p_mes?: string }; Returns: Json }
+      mizloja_painel_resumo: {
+        Args: { p_fim: string; p_inicio: string; p_vendedora_id?: string }
+        Returns: Json
+      }
+      mizloja_painel_series: {
+        Args: { p_fim: string; p_inicio: string; p_vendedora_id?: string }
+        Returns: Json
+      }
+      mizloja_painel_vendedora: {
+        Args: { p_fim: string; p_inicio: string; p_vendedora_id: string }
+        Returns: Json
+      }
       mizloja_proximo_aniversario: {
         Args: { p_dia: number; p_mes: number; p_ref: string }
         Returns: string
@@ -2249,6 +2347,19 @@ export type Database = {
           p_itens: Json
           p_valor_total: number
           p_venda_id: string
+        }
+        Returns: Json
+      }
+      mizloja_salvar_venda_vendedora: {
+        Args: {
+          p_cliente_id: string
+          p_cliente_nova?: Json
+          p_data_venda?: string
+          p_forma_pagamento: string
+          p_itens: Json
+          p_valor_total: number
+          p_venda_id: string
+          p_vendedora_id: string
         }
         Returns: Json
       }
