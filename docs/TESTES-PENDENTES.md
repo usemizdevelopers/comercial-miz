@@ -67,6 +67,8 @@ O conector não aplica `drop table` (pede confirmação e a chamada expira).
 
 ## 2. Criar o Admin Miz (`mizloja-primeiro-admin`, uso único)
 
+> **Feito em 05/10/2026 por outro caminho:** o container não alcança o Supabase pela rede, então, com a aprovação da dona do projeto, a conta foi criada direto pelo conector (SQL em `auth.users` + `auth.identities` com senha bcrypt, `raw_user_meta_data.app = 'mizloja'`, e a linha em `mizloja_admins`): **Rafael Marcenes**, usuário `5531984810586`, `precisa_trocar_senha = true`. Conferido: senha confere, 1 identidade, nenhum `profile` do app MIZ, conta `usemizdigital@gmail.com` intacta no Auth. A linha antiga de `mizloja_admins` (sem usuário) foi **desativada**; para tirá-la de vez, no SQL Editor: `delete from public.mizloja_admins where usuario is null;`. A `mizloja-primeiro-admin` não precisa mais ser publicada. Falta só a parte do site (entrar, trocar a senha) abaixo.
+
 No repositório só existe a versão **desligada** (`CODIGO_USO_UNICO = ''` → sempre 410). O código **nunca** vai para o GitHub.
 
 - [ ] Gerar um código: `openssl rand -hex 24`.
