@@ -202,7 +202,7 @@ export default function FichaCliente() {
               setOcupado(true)
               excluirCliente(c.id)
                 .then((r) => {
-                  toast.mostrar(r === 'apagada' ? 'Cliente apagada' : 'Cliente removida; as vendas continuam nos números')
+                  toast.mostrar(r === 'apagada' || compras === 0 ? 'Cliente excluída' : 'Cliente removida; as vendas continuam nos números')
                   void queryClient.invalidateQueries({ queryKey: ['clientes'] })
                   navegar('/adm/clientes', { replace: true })
                 })

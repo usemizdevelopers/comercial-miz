@@ -108,21 +108,15 @@ export async function todasAsClientes(f: FiltrosClientes, ordem: ColunaOrdem, cr
   return todas
 }
 
-/** Mesclar duplicadas: a função junta tudo na mantida; o site apaga a outra, que ficou vazia. */
+/** Mesclar duplicadas: tudo dentro da função, numa transação (a duplicada sai de vez com mizloja_exclusoes_atomicas; antes dela, fica anonimizada e fora de todas as listas). */
 export async function mesclarClientes(manter: string, remover: string, nome: string, whatsapp: string) {
   const { error } = await supabase.rpc('mizloja_mesclar_clientes', { p_manter: manter, p_remover: remover, p_nome: nome, p_whatsapp: whatsapp })
   if (error) throw error
-  const { error: erroApagar } = await supabase.from('mizloja_clientes').delete().eq('id', remover)
-  // se não apagar agora, ela continua anonimizada e fora de todas as listas
-  if (erroApagar) console.warn('Cliente mesclada não foi apagada', erroApagar)
 }
 
-/** Excluir: com vendas, anonimiza (as vendas continuam nos números); sem vendas, apaga. */
+/** Excluir: só pela função. Com vendas, anonimiza (as vendas continuam nos números); sem vendas, apaga ('apagada' depois de mizloja_exclusoes_atomicas). */
 export async function excluirCliente(id: string): Promise<'apagada' | 'anonimizada'> {
   const { data, error } = await supabase.rpc('mizloja_excluir_cliente', { p_id: id })
   if (error) throw error
-  if (data === 'anonimizada') return 'anonimizada'
-  const { error: erroApagar } = await supabase.from('mizloja_clientes').delete().eq('id', id)
-  if (erroApagar) throw erroApagar
-  return 'apagada'
+  return data === 'apagada' ? 'apagada' : 'anonimizada'
 }

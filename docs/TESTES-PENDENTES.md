@@ -10,7 +10,7 @@ Contas usadas:
 
 ---
 
-## 0. Preparação
+## Antes de começar
 
 - [ ] `.env` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` e `VITE_WHATSAPP_SUPORTE_MIZ`; `npm install`; `npm run check` passando.
 - [ ] Atalhos no terminal:
@@ -34,6 +34,25 @@ fn() {
 ```
 
 ---
+
+## 0. Aplicar a migration `mizloja_exclusoes_atomicas` (junto com a migration 3)
+
+Faz `mizloja_mesclar_clientes` e `mizloja_excluir_cliente` apagarem a cliente dentro da própria função, numa transação só (o site já usa só as funções). O conector não aplica comandos de apagar, por isso vai pelo SQL Editor, na mesma sessão do passo 1.
+
+Até ela entrar, vale a versão provisória (`20261005121914_mizloja_excluir_cliente_oculta`): a duplicada da mescla e a cliente excluída sem vendas ficam no banco **anonimizadas** (WhatsApp nulo, "Cliente removida") e já não aparecem em busca, kanban, tabela nem pastas.
+
+- [ ] Antes, anotar quantas removidas sem vendas existem (serão apagadas pela limpeza do fim do arquivo):
+  `select count(*) from mizloja_clientes c where c.whatsapp is null and not exists (select 1 from mizloja_vendas v where v.cliente_id = c.id);`
+- [ ] Supabase → SQL Editor → colar `supabase/migrations-pendentes/mizloja_exclusoes_atomicas.sql` → Run.
+- [ ] A mesma consulta acima → **0**. Removidas **com** vendas continuam (as vendas seguem nos números).
+- [ ] `select count(*) from information_schema.tables where table_schema = 'public' and table_name not like 'mizloja_%';` → **28** (app MIZ intacto).
+- [ ] Mover o arquivo para `supabase/migrations/<AAAAMMDDHHMMSS>_mizloja_exclusoes_atomicas.sql` (a assinatura das funções não muda; tipos iguais).
+- [ ] No site (depois do passo 3, como Mariana, em `/adm/clientes`):
+  - [ ] Mesclar duas clientes → a duplicada some de vez: `select count(*) from mizloja_clientes where id = '<id da duplicada>';` → **0**; as vendas dela aparecem na mantida; a mescla fica em `mizloja_clientes_mesclas`.
+  - [ ] Excluir uma cliente **sem** vendas → aviso "Cliente excluída"; a mesma consulta pelo id → **0**.
+  - [ ] Excluir uma cliente **com** vendas → "Cliente removida; as vendas continuam nos números"; a linha fica com WhatsApp nulo e as vendas continuam no painel.
+
+**Esperado:** nenhuma cliente apagada pela API do site; as funções fazem tudo numa transação.
 
 ## 1. Aplicar a migration 3 (`mizloja_sem_imagens`)
 

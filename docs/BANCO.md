@@ -191,8 +191,8 @@ Registro das duplicadas mescladas pela ADM: `loja_id`, `cliente_mantida_id`, `re
 | `mizloja_painel_meta` | p_mes = mês atual | jsonb | **ADM.** Meta da loja (rascunho ou publicada), vendido, falta, dias e R$ por dia; `vendedoras`: meta, vendido, nº, %, falta, prêmio e extra (`a_caminho`/`conquistado`) |
 | `mizloja_painel_vendedora` | p_vendedora_id, p_inicio, p_fim | jsonb | **ADM.** Contatos de WhatsApp, clientes atendidas, peças Miz, cadastradas no período e quantas compraram (conversão) |
 | `mizloja_adm_vendas` | p_inicio, p_fim, p_vendedora_id, p_miz, p_peca_id, p_cor, p_tamanho, p_pagamento, p_excluidas = false, p_limite = 50 (máx. 5000), p_offset = 0 | jsonb `{total_linhas, vendas, faturamento, pecas, linhas}` | **ADM.** Lista de vendas com itens; totais sem as excluídas |
-| `mizloja_mesclar_clientes` | p_manter, p_remover, p_nome, p_whatsapp | jsonb | **ADM, definer.** Move vendas, contatos, pulos e transferências para a mantida, aplica nome e WhatsApp escolhidos, anonimiza a outra (fica vazia) e registra em `mizloja_clientes_mesclas`. **O site apaga a outra em seguida** pela API |
-| `mizloja_excluir_cliente` | p_id | text | **ADM, definer.** Com vendas: anonimiza (nome "Cliente removida", sem WhatsApp, aniversário, observações e recado; etapa sem_interesse) e devolve `anonimizada`. Sem vendas: devolve `pode_apagar` e **o site apaga** pela API |
+| `mizloja_mesclar_clientes` | p_manter, p_remover, p_nome, p_whatsapp | jsonb | **ADM, definer.** Move vendas, contatos, pulos e transferências para a mantida, aplica nome e WhatsApp escolhidos, registra em `mizloja_clientes_mesclas` e tira a outra das listas, tudo numa transação. Hoje a outra fica anonimizada (WhatsApp nulo, fora da view, da busca e das pastas); com `mizloja_exclusoes_atomicas` (pendente) ela é apagada dentro da função. O site não apaga nada pela API |
+| `mizloja_excluir_cliente` | p_id | text | **ADM, definer.** Com vendas: anonimiza (nome "Cliente removida", sem WhatsApp, aniversário, observações e recado; etapa sem_interesse) e devolve `anonimizada`. Sem vendas: hoje também anonimiza (provisória `mizloja_excluir_cliente_oculta`); com `mizloja_exclusoes_atomicas` (pendente) apaga dentro da função e devolve `apagada`. O site só chama a função |
 | `mizloja_interno.mizloja_exigir_adm` | — | uuid | Loja da ADM ativa logada; senão erro "Só a dona da loja pode ver ou fazer isso." |
 | `mizloja_interno.mizloja_inicio_dia` | data | timestamptz | Início do dia em São Paulo (filtros por período) |
 | `mizloja_interno.mizloja_indicadores` | loja, início, fim, vendedora | jsonb | Interna de `mizloja_painel_resumo` |
@@ -289,6 +289,8 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 | 20261005114152 | mizloja_painel_adm |
 | 20261005114221 | mizloja_mesclar_excluir_clientes |
 | 20261005114246 | mizloja_salvar_venda_vendedora |
+| 20261005121914 | mizloja_excluir_cliente_oculta |
+| pendente | mizloja_exclusoes_atomicas (`supabase/migrations-pendentes/`) |
 | pendente | mizloja_sem_imagens (`supabase/migrations-pendentes/`) |
 
 ## Edge Functions (escrita com service role)
@@ -296,3 +298,5 @@ O RLS decide **quais linhas**; os grants decidem **quais colunas** a usuária lo
 Criar conta no Auth, gerar senha, bloquear login e criar loja + dona acontecem só nas Edge Functions de `supabase/functions` (lista, quem chama e corpo das chamadas no `CLAUDE.md`, seção "Edge Functions"). Elas gravam nas colunas que a tabela acima marca como "Edge Function". `mizloja-alterar-login` (ADM: vendedora da loja; Admin Miz: a dona) troca WhatsApp, usuário e e-mail técnico juntos e gera senha nova. Funções temporárias: `mizloja-primeiro-admin` (uso único, versão desligada no repositório) e `mizloja-seed-demo` (Loja Demonstração, `docs/DEMO.md`).
 
 Pendente: a migration `mizloja_sem_imagens` (apaga `mizloja_peca_imagens`) está em `supabase/migrations-pendentes/` e ainda não foi aplicada (`docs/TESTES-PENDENTES.md`, passo 1). Até lá a tabela continua no banco, sem uso pelo site.
+
+Pendente: a migration `mizloja_exclusoes_atomicas` (mesclar e excluir cliente apagam dentro da função, numa transação, e uma limpeza apaga as removidas sem vendas) está em `supabase/migrations-pendentes/` (`docs/TESTES-PENDENTES.md`, passo 0). Até lá, a duplicada da mescla e a cliente excluída sem vendas ficam anonimizadas e fora de todas as listas.

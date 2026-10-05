@@ -23,6 +23,7 @@ Itens conhecidos que ficaram para depois. Os testes que dependem de rede estão 
 
 | Item | Situação | O que falta |
 | --- | --- | --- |
+| Migration `mizloja_exclusoes_atomicas` | Escrita em `supabase/migrations-pendentes/`, **não aplicada** (o conector trava em comando de apagar). Até lá vale a provisória `mizloja_excluir_cliente_oculta`: duplicada da mescla e cliente excluída sem vendas ficam anonimizadas e fora de busca, kanban e pastas | Aplicar no SQL Editor junto com a `mizloja_sem_imagens` e mover para `supabase/migrations/` (TESTES-PENDENTES, passo 0) |
 | Migration `mizloja_sem_imagens` | Escrita em `supabase/migrations-pendentes/`, **não aplicada** (o conector trava em comando de apagar) | Aplicar no SQL Editor e mover para `supabase/migrations/` (TESTES-PENDENTES, passo 1) |
 | Linha antiga de `mizloja_admins` (conta `usemizdigital@gmail.com`) | Continua lá até o Admin Miz novo ser criado | A `primeiro-admin` remove a linha (só ela; a conta no Auth e no app MIZ não muda) |
 

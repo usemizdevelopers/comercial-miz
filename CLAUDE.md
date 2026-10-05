@@ -15,7 +15,7 @@ Documentos de referência:
 - `docs/BANCO.md` — banco de dados completo (tabelas, funções, RLS, diagrama).
 
 ## Etapas
-1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · Painel da vendedora (Lançar venda, Ficha, Clientes, Hoje, Metas, Perfil) ✅ no Prompt 3 (testes no site: `docs/TESTES-PENDENTES.md`, passo 5) · Painel da ADM (Visão geral, Equipe, Configurações, Metas e prêmios, Clientes, Vendas) ✅ no Prompt 4 · Próximo: rodar o roteiro `docs/TESTES-PENDENTES.md` e a lista `docs/ANTES-DE-PUBLICAR.md`.
+1. Banco de dados ✅ · 2. Fundação do app + painel Admin Miz (lojas, catálogo, admins), Loja Demonstração e deploy ✅ (testes com rede pendentes: `docs/TESTES-PENDENTES.md`) · Painel da vendedora (Lançar venda, Ficha, Clientes, Hoje, Metas, Perfil) ✅ no Prompt 3 (testes no site: `docs/TESTES-PENDENTES.md`, passo 5) · Painel da ADM (Visão geral, Equipe, Configurações, Metas e prêmios, Clientes, Vendas) ✅ no Prompt 4 · Pendente no SQL Editor: `mizloja_exclusoes_atomicas` + `mizloja_sem_imagens` (roteiro, passos 0 e 1) · Próximo: rodar o roteiro `docs/TESTES-PENDENTES.md` e a lista `docs/ANTES-DE-PUBLICAR.md`.
 Pendências e decisões em aberto: `docs/PENDENCIAS.md`.
 
 ## Independência do app MIZ (REGRA ABSOLUTA)
@@ -44,7 +44,7 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 - **Login:** usuário (WhatsApp só com dígitos, ex.: `5531999998888`) + senha. No Auth, e-mail técnico `<usuario>@mizloja.usemiz.app` (nunca recebe e-mail) e `raw_user_meta_data.app = 'mizloja'`. Contas criadas por Edge Function com service role (etapa 2). Primeiro acesso: `precisa_trocar_senha = true`.
 - Usuária inativa ou loja inativa perde todo o acesso imediatamente (`mizloja_minha_loja()` devolve nulo).
 - **Cliente removida** = WhatsApp nulo (anonimizada pela ADM); some da view, da busca e das pastas, e as vendas continuam nos números.
-- **O conector do Supabase trava em `delete`/`drop`** (até dentro de corpo de função). Funções do banco não apagam linhas: quando precisa apagar, o site apaga pela API com a permissão do RLS. `drop` fica para o SQL Editor, feito pela dona do projeto.
+- **O conector do Supabase trava em `delete`/`drop`** (até dentro de corpo de função). Função com `delete` ou `drop` vai em `supabase/migrations-pendentes/` e a dona do projeto aplica no SQL Editor (ex.: `mizloja_exclusoes_atomicas`, `mizloja_sem_imagens`). Apagar cliente (mesclar/excluir) é só pela função, nunca pelo `.delete()` do site.
 
 ## Funções do banco
 | Função | Para que serve |
@@ -77,8 +77,8 @@ O projeto Supabase `usemizdigitalAPP` (id `ldlwdxgjiohuvionihhv`, sa-east-1) é 
 | `mizloja_painel_meta(mes)` | **ADM:** meta da loja e, por vendedora, meta, vendido, %, falta e prêmio |
 | `mizloja_painel_vendedora(id, inicio, fim)` | **ADM:** contatos, atendidas, peças Miz e conversão de uma vendedora |
 | `mizloja_adm_vendas(…)` | **ADM:** lista de vendas com filtros, página e totais |
-| `mizloja_mesclar_clientes(manter, remover, nome, whatsapp)` | **ADM:** junta duplicadas (o site apaga a outra em seguida) |
-| `mizloja_excluir_cliente(id)` | **ADM:** com vendas anonimiza; sem vendas devolve `pode_apagar` (o site apaga) |
+| `mizloja_mesclar_clientes(manter, remover, nome, whatsapp)` | **ADM:** junta duplicadas numa transação; a outra sai das listas (apagada na própria função depois de `mizloja_exclusoes_atomicas`) |
+| `mizloja_excluir_cliente(id)` | **ADM:** com vendas anonimiza; sem vendas anonimiza hoje e apaga (`apagada`) depois de `mizloja_exclusoes_atomicas` |
 | view `mizloja_v_clientes` | Clientes + status + etapa do kanban + aniversário + valor da última compra + `tem_peca_miz`; sem as removidas |
 
 Detalhes, parâmetros e regras em `docs/BANCO.md`.

@@ -19,6 +19,7 @@ Lista para a virada do MIZ Loja para uso real. Faça depois de passar pelo [rote
 - [ ] **Authentication → Proteção contra senhas vazadas** ligada (aviso do advisor). Vale para o projeto inteiro, inclusive o app MIZ: confirme com quem cuida do app MIZ antes.
 - [ ] Edge Functions publicadas e com `verify_jwt = true`: `mizloja-criar-loja`, `mizloja-criar-usuaria`, `mizloja-nova-senha`, `mizloja-alterar-situacao`, `mizloja-criar-admin`, `mizloja-alterar-login`.
 - [ ] **`mizloja-primeiro-admin` desligada:** a versão publicada tem que ser a do repositório (`CODIGO_USO_UNICO = ''`, responde 410). Ou remova a função.
+- [ ] Migration `mizloja_exclusoes_atomicas` aplicada e movida para `supabase/migrations/` (roteiro, passo 0).
 - [ ] Migration 3 (`mizloja_sem_imagens`) aplicada e movida para `supabase/migrations/` (roteiro, passo 1).
 - [ ] Advisors de segurança e desempenho sem aviso novo do MIZ Loja (os avisos de funções `SECURITY DEFINER` do MIZ Loja são esperados: todas conferem quem chama).
 
