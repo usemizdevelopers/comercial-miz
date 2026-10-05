@@ -70,7 +70,8 @@ export function PassoPecas({ estado, mudar }: { estado: EstadoVenda; mudar: Muda
 
 /* ------------------------------------------------------------------ Peça Miz */
 
-function BlocoMiz({ onAdicionar }: { onAdicionar: (i: Omit<ItemForm, 'chave'>) => void }) {
+/** Escolha de peça Miz (busca, cor ativa, grade e quantidade). Também usada no detalhe da venda da ADM. */
+export function BlocoMiz({ onAdicionar }: { onAdicionar: (i: Omit<ItemForm, 'chave'>) => void }) {
   const { data, isLoading, error } = useCatalogo()
   const [busca, setBusca] = useState('')
   const [peca, setPeca] = useState<PecaCatalogo | null>(null)
@@ -166,7 +167,8 @@ function BlocoMiz({ onAdicionar }: { onAdicionar: (i: Omit<ItemForm, 'chave'>) =
 
 /* ------------------------------------------------------------------ Outra marca */
 
-function BlocoOutraMarca({ onAdicionar }: { onAdicionar: (i: Omit<ItemForm, 'chave'>) => void }) {
+/** Peça de outra marca (cor livre com sugestões, tamanho fixo e quantidade). */
+export function BlocoOutraMarca({ onAdicionar }: { onAdicionar: (i: Omit<ItemForm, 'chave'>) => void }) {
   const [cor, setCor] = useState('')
   const [tamanho, setTamanho] = useState<string | null>(null)
   const [qtd, setQtd] = useState(1)

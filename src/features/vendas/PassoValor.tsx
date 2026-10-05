@@ -10,7 +10,7 @@ type Mudar = (parcial: Partial<EstadoVenda>) => void
 const DIAS_PARA_TRAS = 7
 
 /** Passo 3 · Valor, pagamento, data e resumo. */
-export function PassoValor({ estado, mudar }: { estado: EstadoVenda; mudar: Mudar }) {
+export function PassoValor({ estado, mudar, vendedoras }: { estado: EstadoVenda; mudar: Mudar; vendedoras?: Array<{ id: string; nome: string }> }) {
   const dias = useMemo(
     () =>
       Array.from({ length: DIAS_PARA_TRAS }, (_, i) => {
@@ -51,6 +51,17 @@ export function PassoValor({ estado, mudar }: { estado: EstadoVenda; mudar: Muda
           />
         )}
       </div>
+
+      {vendedoras && vendedoras.length > 0 && (
+        <SelectField
+          rotulo="Vendedora"
+          ajuda="A venda conta para a meta de quem estiver aqui."
+          value={estado.vendedoraId ?? ''}
+          onChange={(e) => mudar({ vendedoraId: e.target.value || null })}
+          opcoes={vendedoras.map((v) => ({ valor: v.id, rotulo: v.nome }))}
+          placeholder="Eu mesma"
+        />
+      )}
 
       <Card className="flex flex-col gap-3">
         <Overline>Resumo</Overline>

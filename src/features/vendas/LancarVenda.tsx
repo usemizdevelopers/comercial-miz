@@ -5,6 +5,7 @@ import { Button, Card, SkeletonCard, StepIndicator, TopBar, lerDataPartes } from
 import { useSessao } from '@/app/sessao/sessaoContexto'
 import { buscarCliente } from '@/features/clientes/api'
 import { useCaminhos } from '@/hooks/useCaminhos'
+import { useEquipe } from '@/hooks/useDadosLoja'
 import { mensagemDeErro } from '@/lib/erros'
 import { novoId } from '@/lib/id'
 import { instanteDaVenda } from '@/lib/vendas'
@@ -33,7 +34,11 @@ const PASSOS = ['Cliente', 'Peças', 'Valor']
  * sem conexão, a venda vai para a fila e sobe sozinha depois (id gerado aqui, sem duplicar).
  */
 export default function LancarVenda() {
-  const { usuaria } = useSessao()
+  const { usuaria, modoVendedora } = useSessao()
+  const { data: equipe } = useEquipe()
+  // ADM fora do modo vendedora escolhe em nome de quem a venda entra (passo 3)
+  const escolheVendedora = usuaria?.papel === 'adm' && !modoVendedora
+  const outrasVendedoras = escolheVendedora ? (equipe ?? []).filter((u) => u.situacao === 'ativa' && u.id !== usuaria?.id) : undefined
   const uid = usuaria?.id ?? ''
   const navegar = useNavigate()
   const caminhos = useCaminhos()
@@ -125,6 +130,7 @@ export default function LancarVenda() {
       cliente_nova: c.nova
         ? { nome: c.nome, whatsapp: c.whatsapp ?? '', aniv_dia: aniv?.dia ?? null, aniv_mes: aniv?.mes ?? null, aniv_ano: aniv?.ano ?? null }
         : null,
+      vendedora_id: escolheVendedora && estado.vendedoraId ? estado.vendedoraId : null,
     }
 
     const concluir = (clienteId: string, naFila: boolean) => {
@@ -216,11 +222,11 @@ export default function LancarVenda() {
         ) : (
           <>
             {estado.passo > 1 && estado.cliente && (
-              <CartaoClienteVenda cliente={estado.cliente} minhaId={uid} onTrocar={() => mudar({ passo: 1, modo: estado.modo ?? 'existente' })} />
+              <CartaoClienteVenda cliente={estado.cliente} minhaId={(escolheVendedora && estado.vendedoraId) || uid} onTrocar={() => mudar({ passo: 1, modo: estado.modo ?? 'existente' })} />
             )}
             {estado.passo === 1 && <PassoCliente estado={estado} mudar={mudar} onEscolher={escolherCliente} />}
             {estado.passo === 2 && <PassoPecas estado={estado} mudar={mudar} />}
-            {estado.passo === 3 && <PassoValor estado={estado} mudar={mudar} />}
+            {estado.passo === 3 && <PassoValor estado={estado} mudar={mudar} vendedoras={outrasVendedoras} />}
           </>
         )}
 

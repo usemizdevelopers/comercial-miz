@@ -28,6 +28,8 @@ export interface PacoteVenda {
   itens: ItemPayload[]
   data_venda: string
   cliente_nova: ClienteNovaPayload | null
+  /** só a ADM lança em nome de outra pessoa (o banco confere) */
+  vendedora_id?: string | null
 }
 
 export interface VendaSalva {
@@ -37,6 +39,20 @@ export interface VendaSalva {
 }
 
 export async function salvarVenda(p: PacoteVenda): Promise<VendaSalva> {
+  if (p.vendedora_id) {
+    const { data, error } = await supabase.rpc('mizloja_salvar_venda_vendedora', {
+      p_vendedora_id: p.vendedora_id,
+      p_venda_id: p.venda_id,
+      p_cliente_id: p.cliente_id,
+      p_valor_total: p.valor_total,
+      p_forma_pagamento: p.forma_pagamento,
+      p_itens: p.itens as unknown as Json,
+      p_data_venda: p.data_venda,
+      p_cliente_nova: (p.cliente_nova ?? undefined) as unknown as Json,
+    })
+    if (error) throw error
+    return data as unknown as VendaSalva
+  }
   const { data, error } = await supabase.rpc('mizloja_salvar_venda', {
     p_venda_id: p.venda_id,
     p_cliente_id: p.cliente_id,

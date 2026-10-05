@@ -45,6 +45,8 @@ export interface EstadoVenda {
   valor: number | null
   pagamento: FormaPagamento | null
   diasAtras: number
+  /** ADM fora do modo vendedora: em nome de quem a venda entra (null = ela mesma) */
+  vendedoraId?: string | null
 }
 
 export const ESTADO_INICIAL: EstadoVenda = {
